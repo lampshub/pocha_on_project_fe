@@ -1,18 +1,15 @@
 <template>
   <div class="settings-page">
-    <!-- 헤더 -->
     <header class="header">
       <div class="store-name">{{ storeName }}</div>
       <router-link to="/owner/panel" class="back-btn">← 메인으로</router-link>
     </header>
 
-    <!-- 설정 카드 -->
     <div class="settings-view">
       <div class="settings-header">
         <div class="settings-title">설정 관리</div>
         <div class="settings-subtitle">매장 운영 설정</div>
       </div>
-
       <div class="settings-grid">
         <div class="settings-card" @click="activeModal = 'table'">
           <div class="settings-icon">🪑</div>
@@ -51,8 +48,8 @@
         </div>
         <div class="modal-body">
           <div class="table-list">
-            <div v-for="table in tables" :key="table.number" class="table-item">
-              <button class="delete-table-btn" @click="deleteTable(table.number)">×</button>
+            <div v-for="table in tables" :key="table.id" class="table-item">
+              <button class="delete-table-btn" @click="deleteTable(table.id, table.number)">×</button>
               <div class="table-item-number">{{ table.number }}번</div>
             </div>
           </div>
@@ -77,9 +74,9 @@
         <div class="modal-body">
           <div class="form-group">
             <label class="form-label">메뉴 이미지</label>
-            <div class="image-upload-area" :class="{ 'has-image': newMenu.image }" @click="$refs.imageInput.click()">
+            <div class="image-upload-area" :class="{ 'has-image': newMenu.imagePreview }" @click="$refs.imageInput.click()">
               <input type="file" ref="imageInput" @change="handleImageUpload" accept="image/*" style="display:none" />
-              <img v-if="newMenu.image" :src="newMenu.image" class="preview-image" />
+              <img v-if="newMenu.imagePreview" :src="newMenu.imagePreview" class="preview-image" />
               <div v-else class="upload-placeholder">
                 <div class="upload-icon">📸</div>
                 <div class="upload-text">클릭하여 이미지 업로드</div>
@@ -88,12 +85,11 @@
           </div>
           <div class="form-group">
             <label class="form-label">카테고리</label>
-            <select v-model="newMenu.category" class="form-select">
-              <option value="">선택하세요</option>
-              <option value="메인">메인</option>
-              <option value="사이드">사이드</option>
-              <option value="음료">음료</option>
-              <option value="주류">주류</option>
+            <select v-model="newMenu.categoryId" class="form-select">
+              <option :value="null" disabled>선택하세요</option>
+              <option v-for="cat in categories" :key="cat.categoryId" :value="cat.categoryId">
+                {{ cat.categoryName }}
+              </option>
             </select>
           </div>
           <div class="form-group">
@@ -112,23 +108,25 @@
             <label class="form-label">설명</label>
             <textarea v-model="newMenu.description" class="form-textarea" placeholder="메뉴 설명을 입력하세요"></textarea>
           </div>
+
+          <!-- 옵션 섹션 -->
           <div class="form-group">
             <label class="form-label">옵션</label>
-            <div v-for="(option, idx) in newMenu.options" :key="idx" class="option-group">
+            <div v-for="(option, oIdx) in newMenu.options" :key="oIdx" class="option-group">
               <div class="option-header">
-                <input type="text" v-model="option.name" class="form-input" placeholder="옵션 이름 (예: 맵기 선택)" />
-                <button class="remove-option-btn" @click="newMenu.options.splice(idx, 1)">삭제</button>
+                <input type="text" v-model="option.optionName" class="form-input" placeholder="옵션 그룹명 (예: 맵기 선택)" />
+                <button class="remove-option-btn" @click="newMenu.options.splice(oIdx, 1)">삭제</button>
               </div>
               <div class="option-items">
                 <div v-for="(detail, dIdx) in option.details" :key="dIdx" class="option-item">
-                  <input type="text" v-model="detail.name" class="form-input" placeholder="옵션 상세" />
-                  <input type="number" v-model.number="detail.price" class="form-input" placeholder="추가금액" />
+                  <input type="text" v-model="detail.optionDetailName" class="form-input" placeholder="옵션 상세명" />
+                  <input type="number" v-model.number="detail.optionDetailPrice" class="form-input" placeholder="추가금액" />
                   <button class="remove-option-btn" @click="option.details.splice(dIdx, 1)">×</button>
                 </div>
               </div>
-              <button class="add-option-detail-btn" @click="option.details.push({ name: '', price: 0 })">+ 옵션 추가</button>
+              <button class="add-option-detail-btn" @click="option.details.push({ optionDetailName: '', optionDetailPrice: 0 })">+ 옵션 상세 추가</button>
             </div>
-            <button class="add-option-btn" @click="newMenu.options.push({ name: '', details: [{ name: '', price: 0 }] })">+ 새 옵션 그룹 추가</button>
+            <button class="add-option-btn" @click="newMenu.options.push({ optionName: '', details: [{ optionDetailName: '', optionDetailPrice: 0 }] })">+ 옵션 추가</button>
           </div>
         </div>
         <div class="modal-footer">
@@ -147,13 +145,11 @@
         </div>
         <div class="modal-body">
           <div class="menu-list">
-            <div v-for="menu in menuList" :key="menu.id" class="menu-item" @click="openMenuDetail(menu)">
-              <img :src="menu.image || 'https://via.placeholder.com/100'" class="menu-image" />
+            <div v-for="menu in menuList" :key="menu.menuId" class="menu-item" @click="openMenuDetail(menu)">
+              <img :src="menu.imageUrl || 'https://via.placeholder.com/100'" class="menu-image" />
               <div class="menu-info">
-                <div class="menu-category">{{ menu.category }}</div>
-                <div class="menu-name">{{ menu.name }}</div>
-                <div class="menu-price">{{ formatPrice(menu.price) }}원</div>
-                <div class="menu-description">{{ menu.description }}</div>
+                <div class="menu-name">{{ menu.menuName }}</div>
+                <div class="menu-price">{{ formatPrice(menu.menuPrice) }}원</div>
               </div>
             </div>
           </div>
@@ -171,16 +167,16 @@
         <div class="modal-body">
           <div class="form-group">
             <label class="form-label">카테고리</label>
-            <select v-model="editMenu.category" class="form-select">
-              <option value="메인">메인</option>
-              <option value="사이드">사이드</option>
-              <option value="음료">음료</option>
-              <option value="주류">주류</option>
+            <select v-model="editMenu.categoryId" class="form-select">
+              <option :value="null" disabled>선택하세요</option>
+              <option v-for="cat in categories" :key="cat.categoryId" :value="cat.categoryId">
+                {{ cat.categoryName }}
+              </option>
             </select>
           </div>
           <div class="form-group">
             <label class="form-label">메뉴 이름</label>
-            <input type="text" v-model="editMenu.name" class="form-input" />
+            <input type="text" v-model="editMenu.menuName" class="form-input" />
           </div>
           <div class="form-group">
             <label class="form-label">가격 (원)</label>
@@ -192,25 +188,44 @@
           </div>
           <div class="form-group">
             <label class="form-label">설명</label>
-            <textarea v-model="editMenu.description" class="form-textarea"></textarea>
+            <textarea v-model="editMenu.explanation" class="form-textarea"></textarea>
           </div>
+
+          <!-- 옵션 아코디언 -->
           <div class="form-group">
             <label class="form-label">옵션</label>
-            <div v-for="(option, idx) in editMenu.options" :key="idx" class="option-group">
-              <div class="option-header">
-                <input type="text" v-model="option.name" class="form-input" placeholder="옵션 이름" />
-                <button class="remove-option-btn" @click="editMenu.options.splice(idx, 1)">삭제</button>
+
+            <div v-for="option in editMenu.options" :key="option.optionId" class="option-group">
+              <!-- 옵션 헤더 - 클릭하면 펼침/접음 -->
+              <div class="option-header accordion-header" @click="toggleOption(option.optionId)">
+                <span class="option-title">{{ option.optionName || '(이름 없음)' }}</span>
+                <span class="accordion-arrow">{{ expandedOptions.includes(option.optionId) ? '▲' : '▼' }}</span>
+                <button class="remove-option-btn" @click.stop="deleteOption(option.optionId)">삭제</button>
               </div>
-              <div class="option-items">
-                <div v-for="(detail, dIdx) in option.details" :key="dIdx" class="option-item">
-                  <input type="text" v-model="detail.name" class="form-input" placeholder="옵션 상세" />
-                  <input type="number" v-model.number="detail.price" class="form-input" placeholder="추가금액" />
-                  <button class="remove-option-btn" @click="option.details.splice(dIdx, 1)">×</button>
+
+              <!-- 펼쳐진 상태 -->
+              <div v-if="expandedOptions.includes(option.optionId)" class="accordion-body">
+                <!-- 옵션명 수정 -->
+                <div class="option-name-edit">
+                  <input type="text" v-model="option.optionName" class="form-input" placeholder="옵션 그룹명" />
+                  <button class="btn btn-secondary btn-sm" @click="updateOption(option)">저장</button>
                 </div>
+
+                <!-- 옵션 상세 목록 -->
+                <div class="option-items">
+                  <div v-for="detail in option.details" :key="detail.optionDetailId" class="option-item">
+                    <input type="text" v-model="detail.optionDetailName" class="form-input" placeholder="옵션 상세명" />
+                    <input type="number" v-model.number="detail.optionDetailPrice" class="form-input" placeholder="추가금액" />
+                    <button class="btn btn-secondary btn-sm" @click="updateOptionDetail(detail)">저장</button>
+                    <button class="remove-option-btn" @click="deleteOptionDetail(detail.optionDetailId, option.optionId)">×</button>
+                  </div>
+                </div>
+                <button class="add-option-detail-btn" @click="addOptionDetail(option)">+ 옵션 상세 추가</button>
               </div>
-              <button class="add-option-detail-btn" @click="option.details.push({ name: '', price: 0 })">+ 옵션 추가</button>
             </div>
-            <button class="add-option-btn" @click="editMenu.options.push({ name: '', details: [{ name: '', price: 0 }] })">+ 새 옵션 그룹 추가</button>
+
+            <!-- 새 옵션 그룹 추가 -->
+            <button class="add-option-btn" @click="addOption">+ 옵션 추가</button>
           </div>
         </div>
         <div class="modal-footer">
@@ -259,35 +274,16 @@
               <div class="profile-value">{{ ownerInfo.name }}</div>
             </div>
             <div class="profile-item">
-              <div class="profile-label">매장명</div>
-              <div class="profile-value">{{ ownerInfo.storeName }}</div>
+              <div class="profile-label">이메일</div>
+              <div class="profile-value">{{ ownerInfo.email }}</div>
             </div>
             <div class="profile-item">
               <div class="profile-label">전화번호</div>
-              <div class="profile-value">
-                <span>{{ ownerInfo.phone }}</span>
-                <button class="edit-profile-btn" @click="editingPhone = !editingPhone">수정</button>
-              </div>
-              <div v-if="editingPhone" class="edit-form">
-                <div class="edit-form-group">
-                  <label>새 전화번호</label>
-                  <div class="inline-row">
-                    <input v-model="newPhone" type="tel" placeholder="010-0000-0000" @input="formatPhoneNumber" maxlength="13" :disabled="phoneCodeSent" />
-                    <button v-if="!phoneCodeSent" class="btn btn-primary btn-sm" @click="sendPhoneVerification">인증</button>
-                  </div>
-                </div>
-                <div v-if="phoneCodeSent && !phoneVerified" class="edit-form-group">
-                  <label>인증 코드</label>
-                  <div class="inline-row">
-                    <input v-model="phoneVerificationCode" type="text" placeholder="인증 코드 입력" maxlength="6" />
-                    <button class="btn btn-primary btn-sm" @click="verifyPhoneCode">확인</button>
-                  </div>
-                </div>
-                <div class="edit-form-actions">
-                  <button v-if="phoneVerified" class="btn btn-primary btn-sm" @click="savePhone">변경</button>
-                  <button class="btn btn-secondary btn-sm" @click="cancelPhoneEdit">취소</button>
-                </div>
-              </div>
+              <div class="profile-value">{{ ownerInfo.phone }}</div>
+            </div>
+            <div class="profile-item">
+              <div class="profile-label">사업자등록번호</div>
+              <div class="profile-value">{{ ownerInfo.businessNumber }}</div>
             </div>
             <div class="profile-item">
               <div class="profile-label">비밀번호</div>
@@ -302,21 +298,13 @@
                 </div>
                 <div class="edit-form-group">
                   <label>새 비밀번호</label>
-                  <input v-model="newPassword" type="password" placeholder="새 비밀번호 입력" />
+                  <input v-model="newPassword" type="password" placeholder="새 비밀번호 (8자 이상)" />
                 </div>
                 <div class="edit-form-actions">
                   <button class="btn btn-primary btn-sm" @click="savePassword">변경</button>
                   <button class="btn btn-secondary btn-sm" @click="cancelPasswordEdit">취소</button>
                 </div>
               </div>
-            </div>
-            <div class="profile-item">
-              <div class="profile-label">이메일</div>
-              <div class="profile-value">{{ ownerInfo.email }}</div>
-            </div>
-            <div class="profile-item">
-              <div class="profile-label">사업자등록번호</div>
-              <div class="profile-value">{{ ownerInfo.businessNumber }}</div>
             </div>
           </div>
           <button class="logout-btn" @click="logout">로그아웃</button>
@@ -327,194 +315,354 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-// import { tableApi, menuApi, businessApi, ownerApi } from '@/api'  ← 서버 연동 시
+import api from '@/api/axios.js'
 
 const router = useRouter()
-const storeName = ref('강남 본점')
+const storeName = ref(localStorage.getItem('currentStoreName') || '매장')
 const activeModal = ref(null)
 
 // ── 테이블 ──
-const tables = ref([
-  { number: 1 }, { number: 2 }, { number: 3 },
-  { number: 4 }, { number: 5 }, { number: 6 },
-])
+const tables = ref([])
 const newTableNumber = ref(null)
 
 // ── 메뉴 ──
-const menuList = ref([
-  { id: 1, name: '불고기', category: '메인', price: 18000, origin: '국내산 소고기', description: '달콤하고 맛있는 불고기입니다', image: 'https://via.placeholder.com/100', options: [{ name: '맵기 선택', details: [{ name: '순한맛', price: 0 }, { name: '보통맛', price: 0 }, { name: '매운맛', price: 0 }] }] },
-  { id: 2, name: '김치찌개', category: '메인', price: 9000, origin: '국내산 돼지고기', description: '얼큰한 김치찌개', image: 'https://via.placeholder.com/100', options: [] },
-  { id: 3, name: '소주', category: '주류', price: 5000, origin: '국내산', description: '참이슬', image: 'https://via.placeholder.com/100', options: [] },
-])
-const newMenu = reactive({ image: null, category: '', name: '', price: 0, origin: '', description: '', options: [] })
+const menuList = ref([])
+const categories = ref([])
+const newMenu = reactive({
+  imageFile: null,
+  imagePreview: null,
+  categoryId: null,
+  name: '',
+  price: 0,
+  origin: '',
+  description: '',
+  options: [], // [{ optionName, details: [{ optionDetailName, optionDetailPrice }] }]
+})
 const editMenu = ref(null)
+const expandedOptions = ref([]) // 수정 화면에서 펼쳐진 optionId 목록
 
 // ── 영업시간 ──
 const businessHours = reactive({ open: '10:00', close: '22:00' })
 
 // ── 마이페이지 ──
-const ownerInfo = reactive({ name: '김점주', storeName: '강남 본점', phone: '010-1234-5678', email: 'owner@example.com', businessNumber: '123-45-67890', password: 'mypassword123' })
-const editingPhone = ref(false)
+const ownerInfo = reactive({ name: '', email: '', phone: '', businessNumber: '' })
 const editingPassword = ref(false)
-const newPhone = ref('')
-const phoneVerificationCode = ref('')
-const phoneCodeSent = ref(false)
-const phoneVerified = ref(false)
-const generatedPhoneCode = ref('')
 const oldPassword = ref('')
 const newPassword = ref('')
 
-/* ── 서버 연동 시 아래 주석 해제 ──
+// ── 초기 로딩 ──
 onMounted(async () => {
-  try {
-    const [tablesRes, menusRes, hoursRes, profileRes] = await Promise.all([
-      tableApi.getAll(),
-      menuApi.getAll(),
-      businessApi.getHours(),
-      ownerApi.getProfile(),
-    ])
-    tables.value = tablesRes.data
-    menuList.value = menusRes.data
-    Object.assign(businessHours, hoursRes.data)
-    Object.assign(ownerInfo, profileRes.data)
-  } catch (e) {
-    console.error('데이터 로딩 실패:', e)
-  }
+  await Promise.all([loadTables(), loadMenus(), loadCategories(), loadMyPage()])
 })
-*/
+
+const loadTables = async () => {
+  try {
+    const res = await api.get('/customertable/gettablelist')
+    tables.value = res.data.map(t => ({ id: t.customerTableId, number: t.tableNum }))
+  } catch (e) {
+    console.error('테이블 목록 로딩 실패:', e)
+  }
+}
+
+const loadMenus = async () => {
+  try {
+    const res = await api.get('/view/all')
+    // 응답: [{ menuId, menuName, menuPrice, imageUrl }]
+    menuList.value = res.data
+  } catch (e) {
+    console.error('메뉴 목록 로딩 실패:', e)
+  }
+}
+
+const loadCategories = async () => {
+  try {
+    const res = await api.get('/view/category')
+    // 응답: [{ categoryId, categoryName, mappingMenuList }]
+    categories.value = res.data
+  } catch (e) {
+    console.error('카테고리 로딩 실패:', e)
+  }
+}
+
+const loadMyPage = async () => {
+  try {
+    const res = await api.get('/owner/mypage')
+    ownerInfo.name = res.data.ownerName
+    ownerInfo.email = res.data.ownerEmail
+    ownerInfo.phone = res.data.phoneNumber
+    ownerInfo.businessNumber = res.data.BusinessRegistrationNumber
+  } catch (e) {
+    console.error('마이페이지 로딩 실패:', e)
+  }
+}
 
 const formatPrice = (price) => (price ?? 0).toLocaleString('ko-KR')
 
 // ── 테이블 ──
-const addTable = () => {
+const addTable = async () => {
   if (!newTableNumber.value) return alert('테이블 번호를 입력하세요.')
-  if (tables.value.find(t => t.number === newTableNumber.value)) return alert('이미 존재하는 테이블 번호입니다.')
-  // await tableApi.add({ number: newTableNumber.value })  ← 서버 연동 시
-  tables.value.push({ number: newTableNumber.value })
-  tables.value.sort((a, b) => a.number - b.number)
-  newTableNumber.value = null
-  alert('테이블이 추가되었습니다.')
+  try {
+    await api.post('/customertable/create', { tableNum: newTableNumber.value })
+    alert('테이블이 추가되었습니다.')
+    newTableNumber.value = null
+    await loadTables()
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '테이블 추가 실패')
+  }
 }
 
-const deleteTable = (num) => {
-  if (!confirm(`${num}번 테이블을 삭제하시겠습니까?`)) return
-  // await tableApi.delete(num)  ← 서버 연동 시
-  tables.value = tables.value.filter(t => t.number !== num)
+const deleteTable = async (tableId, tableNum) => {
+  if (!confirm(`${tableNum}번 테이블을 삭제하시겠습니까?`)) return
+  try {
+    await api.delete(`/customertable/${tableId}`)
+    await loadTables()
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '테이블 삭제 실패')
+  }
 }
 
 // ── 메뉴 등록 ──
 const handleImageUpload = (e) => {
   const file = e.target.files[0]
   if (!file) return
+  newMenu.imageFile = file
   const reader = new FileReader()
-  reader.onload = (ev) => { newMenu.image = ev.target.result }
+  reader.onload = (ev) => { newMenu.imagePreview = ev.target.result }
   reader.readAsDataURL(file)
 }
 
-const registerMenu = () => {
-  if (!newMenu.name || !newMenu.category || !newMenu.price) return alert('필수 항목을 모두 입력하세요.')
-  // await menuApi.create(newMenu)  ← 서버 연동 시
-  menuList.value.push({ id: Date.now(), ...JSON.parse(JSON.stringify(newMenu)) })
-  Object.assign(newMenu, { image: null, category: '', name: '', price: 0, origin: '', description: '', options: [] })
-  activeModal.value = null
-  alert('메뉴가 등록되었습니다.')
+const registerMenu = async () => {
+  if (!newMenu.name || !newMenu.categoryId || !newMenu.price) return alert('필수 항목을 모두 입력하세요.')
+  try {
+    // 1. 메뉴 등록 → menuId 반환
+    const formData = new FormData()
+    formData.append('menuName', newMenu.name)
+    formData.append('price', newMenu.price)
+    formData.append('origin', newMenu.origin)
+    formData.append('explanation', newMenu.description)
+    formData.append('categoryId', newMenu.categoryId)
+    if (newMenu.imageFile) formData.append('menuImage', newMenu.imageFile)
+
+    const menuRes = await api.post('/store/menu/create', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    const menuId = menuRes.data // 백엔드: body(menuId)
+
+    // 2. 옵션 그룹 순서대로 등록
+    for (const option of newMenu.options) {
+      if (!option.optionName.trim()) continue
+      const optionRes = await api.post(`/store/menu/${menuId}/option`, {
+        optionName: option.optionName,
+      })
+      const optionId = optionRes.data // 백엔드: body(optionId)
+
+      // 3. 옵션 상세 등록
+      for (const detail of option.details) {
+        if (!detail.optionDetailName.trim()) continue
+        await api.post(`/store/menu/option/${optionId}/detail`, {
+          optionDetailName: detail.optionDetailName,
+          optionDetailPrice: detail.optionDetailPrice,
+        })
+      }
+    }
+
+    alert('메뉴가 등록되었습니다.')
+    Object.assign(newMenu, {
+      imageFile: null, imagePreview: null, categoryId: null,
+      name: '', price: 0, origin: '', description: '', options: [],
+    })
+    activeModal.value = null
+    await loadMenus()
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '메뉴 등록 실패')
+  }
 }
 
-// ── 메뉴 수정 ──
-const openMenuDetail = (menu) => {
-  editMenu.value = JSON.parse(JSON.stringify(menu))
+// ── 메뉴 수정 열기 ──
+const openMenuDetail = async (menu) => {
+  expandedOptions.value = []
+  try {
+    // 백엔드에 새로 만들 점주용 상세 API
+    // GET /store/menu/{menuId}/detail
+    // 응답: { menuId, menuName, price, categoryId, origin, explanation, imageUrl,
+    //         options: [{ optionId, optionName, details: [{ optionDetailId, optionDetailName, optionDetailPrice }] }] }
+    const res = await api.get(`/store/menu/${menu.menuId}/detail`)
+    editMenu.value = {
+      id: res.data.menuId,
+      menuName: res.data.menuName,
+      price: res.data.price,
+      categoryId: res.data.categoryId,
+      origin: res.data.origin || '',
+      explanation: res.data.explanation || '',
+      options: (res.data.options || []).map(o => ({
+        optionId: o.optionId,
+        optionName: o.optionName,
+        details: (o.details || []).map(d => ({
+          optionDetailId: d.optionDetailId,
+          optionDetailName: d.optionDetailName,
+          optionDetailPrice: d.optionDetailPrice,
+        })),
+      })),
+    }
+  } catch (e) {
+    // 백엔드 API 미완성 시 fallback
+    editMenu.value = {
+      id: menu.menuId,
+      menuName: menu.menuName,
+      price: menu.menuPrice,
+      categoryId: null,
+      origin: '',
+      explanation: '',
+      options: [],
+    }
+  }
   activeModal.value = 'menuDetail'
 }
 
-const saveMenuEdit = () => {
-  const idx = menuList.value.findIndex(m => m.id === editMenu.value.id)
-  if (idx === -1) return
-  // await menuApi.update(editMenu.value.id, editMenu.value)  ← 서버 연동 시
-  menuList.value[idx] = { ...editMenu.value }
-  activeModal.value = null
-  alert('메뉴가 수정되었습니다.')
+// ── 메뉴 정보 저장 ──
+const saveMenuEdit = async () => {
+  try {
+    const formData = new FormData()
+    formData.append('menuName', editMenu.value.menuName)
+    formData.append('price', editMenu.value.price)
+    formData.append('origin', editMenu.value.origin || '')
+    formData.append('explanation', editMenu.value.explanation || '')
+    formData.append('categoryId', editMenu.value.categoryId)
+    if (editMenu.value.imageFile) formData.append('menuImage', editMenu.value.imageFile)
+
+    await api.put(`/store/menu/${editMenu.value.id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    alert('메뉴 정보가 수정되었습니다.')
+    await loadMenus()
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '메뉴 수정 실패')
+  }
 }
 
-const deleteMenu = () => {
+// ── 메뉴 삭제 ──
+const deleteMenu = async () => {
   if (!confirm('정말 이 메뉴를 삭제하시겠습니까?')) return
-  // await menuApi.delete(editMenu.value.id)  ← 서버 연동 시
-  menuList.value = menuList.value.filter(m => m.id !== editMenu.value.id)
-  activeModal.value = null
-  alert('메뉴가 삭제되었습니다.')
+  try {
+    await api.delete(`/store/menu/${editMenu.value.id}`)
+    alert('메뉴가 삭제되었습니다.')
+    activeModal.value = null
+    await loadMenus()
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '메뉴 삭제 실패')
+  }
+}
+
+// ── 옵션 아코디언 토글 ──
+const toggleOption = (optionId) => {
+  const idx = expandedOptions.value.indexOf(optionId)
+  if (idx === -1) expandedOptions.value.push(optionId)
+  else expandedOptions.value.splice(idx, 1)
+}
+
+// ── 옵션 추가 (수정 화면) ──
+const addOption = async () => {
+  try {
+    const res = await api.post(`/store/menu/${editMenu.value.id}/option`, { optionName: '새 옵션' })
+    const newOptionId = res.data
+    editMenu.value.options.push({ optionId: newOptionId, optionName: '새 옵션', details: [] })
+    expandedOptions.value.push(newOptionId) // 추가 즉시 펼침
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '옵션 추가 실패')
+  }
+}
+
+// ── 옵션명 수정 ──
+const updateOption = async (option) => {
+  try {
+    await api.put(`/store/menu/option/${option.optionId}`, { optionName: option.optionName })
+    alert('옵션이 수정되었습니다.')
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '옵션 수정 실패')
+  }
+}
+
+// ── 옵션 삭제 ──
+const deleteOption = async (optionId) => {
+  if (!confirm('이 옵션을 삭제하시겠습니까?')) return
+  try {
+    await api.delete(`/store/menu/option/${optionId}`)
+    editMenu.value.options = editMenu.value.options.filter(o => o.optionId !== optionId)
+    expandedOptions.value = expandedOptions.value.filter(id => id !== optionId)
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '옵션 삭제 실패')
+  }
+}
+
+// ── 옵션 상세 추가 ──
+const addOptionDetail = async (option) => {
+  try {
+    const res = await api.post(`/store/menu/option/${option.optionId}/detail`, {
+      optionDetailName: '새 옵션 상세',
+      optionDetailPrice: 0,
+    })
+    const newDetailId = res.data
+    option.details.push({ optionDetailId: newDetailId, optionDetailName: '새 옵션 상세', optionDetailPrice: 0 })
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '옵션 상세 추가 실패')
+  }
+}
+
+// ── 옵션 상세 수정 ──
+const updateOptionDetail = async (detail) => {
+  try {
+    await api.put(`/store/menu/option/detail/${detail.optionDetailId}`, {
+      optionDetailName: detail.optionDetailName,
+      optionDetailPrice: detail.optionDetailPrice,
+    })
+    alert('옵션 상세가 수정되었습니다.')
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '옵션 상세 수정 실패')
+  }
+}
+
+// ── 옵션 상세 삭제 ──
+const deleteOptionDetail = async (optionDetailId, optionId) => {
+  if (!confirm('이 옵션 상세를 삭제하시겠습니까?')) return
+  try {
+    await api.delete(`/store/menu/option/detail/${optionDetailId}`)
+    const option = editMenu.value.options.find(o => o.optionId === optionId)
+    if (option) option.details = option.details.filter(d => d.optionDetailId !== optionDetailId)
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '옵션 상세 삭제 실패')
+  }
 }
 
 // ── 영업시간 ──
-import axios from 'axios'
-
 const saveBusinessHours = async () => {
-  const storeId = localStorage.getItem('storeId')
-  const token = localStorage.getItem('accessToken')
-
-  const openAt  = businessHours.open  + ':00'
-  const closeAt = businessHours.close + ':00'
-
+  const storeId = localStorage.getItem('currentStoreId')
   try {
-    await axios.patch(
-      `${process.env.VUE_APP_API_BASE_URL}/store/${storeId}/updateTime`,
-      { openAt, closeAt },
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
+    await api.patch(`/store/${storeId}/updateTime`, {
+      openAt: businessHours.open + ':00',
+      closeAt: businessHours.close + ':00',
+    })
     alert('영업시간이 저장되었습니다.')
     activeModal.value = null
   } catch (e) {
     alert(e.response?.data?.errorMessage || '저장 실패')
   }
-
-}
-
-// ── 전화번호 ──
-const formatPhoneNumber = (e) => {
-  let v = e.target.value.replace(/[^0-9]/g, '')
-  if (v.length <= 3) newPhone.value = v
-  else if (v.length <= 7) newPhone.value = v.slice(0, 3) + '-' + v.slice(3)
-  else newPhone.value = v.slice(0, 3) + '-' + v.slice(3, 7) + '-' + v.slice(7, 11)
-}
-
-const sendPhoneVerification = () => {
-  if (!/^010-\d{4}-\d{4}$/.test(newPhone.value)) return alert('형식이 올바르지 않습니다.')
-  // await ownerApi.sendVerification(newPhone.value)  ← 서버 연동 시
-  generatedPhoneCode.value = Math.floor(100000 + Math.random() * 900000).toString()
-  phoneCodeSent.value = true
-  alert(`인증 코드 발송 (개발용: ${generatedPhoneCode.value})`)
-}
-
-const verifyPhoneCode = () => {
-  if (phoneVerificationCode.value !== generatedPhoneCode.value) return alert('인증 코드가 일치하지 않습니다.')
-  phoneVerified.value = true
-  alert('인증 완료')
-}
-
-const savePhone = () => {
-  // await ownerApi.updatePhone({ phone: newPhone.value })  ← 서버 연동 시
-  ownerInfo.phone = newPhone.value
-  cancelPhoneEdit()
-  alert('전화번호가 변경되었습니다.')
-}
-
-const cancelPhoneEdit = () => {
-  editingPhone.value = false
-  newPhone.value = ''
-  phoneVerificationCode.value = ''
-  phoneCodeSent.value = false
-  phoneVerified.value = false
-  generatedPhoneCode.value = ''
 }
 
 // ── 비밀번호 ──
-const savePassword = () => {
+const savePassword = async () => {
   if (!oldPassword.value || !newPassword.value) return alert('모든 항목을 입력하세요.')
-  if (oldPassword.value !== ownerInfo.password) return alert('기존 비밀번호가 일치하지 않습니다.')
-  // await ownerApi.updatePassword({ old: oldPassword.value, new: newPassword.value })  ← 서버 연동 시
-  ownerInfo.password = newPassword.value
-  cancelPasswordEdit()
-  alert('비밀번호가 변경되었습니다.')
+  try {
+    await api.put('/owner/mypage/updatepassword', {
+      oldPassword: oldPassword.value,
+      newPassword: newPassword.value,
+    })
+    alert('비밀번호가 변경되었습니다.')
+    cancelPasswordEdit()
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '비밀번호 변경 실패')
+  }
 }
 
 const cancelPasswordEdit = () => {
@@ -525,11 +673,39 @@ const cancelPasswordEdit = () => {
 
 const logout = () => {
   if (!confirm('로그아웃 하시겠습니까?')) return
-  // 서버 연동 시: 토큰 삭제 후 로그인 페이지로 이동
+  localStorage.clear()
   router.push('/')
 }
 </script>
 
 <style scoped>
 @import "@/assets/css/OwnerSettings.css";
+
+/* 아코디언 스타일 */
+.accordion-header {
+  cursor: pointer;
+  user-select: none;
+}
+.accordion-header:hover {
+  opacity: 0.85;
+}
+.option-title {
+  flex: 1;
+  font-weight: 700;
+}
+.accordion-arrow {
+  font-size: 12px;
+  color: #a1a1aa;
+  margin-right: 8px;
+}
+.accordion-body {
+  padding: 12px 0 4px 0;
+  border-top: 1px solid #3f3f46;
+  margin-top: 4px;
+}
+.option-name-edit {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
 </style>
