@@ -47,17 +47,27 @@
           <button class="close-btn" @click="activeModal = null">×</button>
         </div>
         <div class="modal-body">
-          <div class="table-list">
-            <div v-for="table in tables" :key="table.id" class="table-item">
-              <button class="delete-table-btn" @click="deleteTable(table.id, table.number)">×</button>
+          <div class="table-list" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:8px;">
+            <div v-for="table in tables" :key="table.id" class="table-item" style="padding: 6px 8px; min-height:unset;">
+              <button class="delete-table-btn" style="width:12px; height:12px; font-size:10px; line-height:1;" @click="deleteTable(table.id, table.number)">×</button>
               <div class="table-item-number">{{ table.number }}번</div>
             </div>
           </div>
           <div class="add-table-section">
             <div class="form-label">테이블 추가</div>
-            <div class="add-table-input">
-              <input type="number" v-model.number="newTableNumber" class="form-input" placeholder="테이블 번호 입력" />
-              <button class="btn btn-primary" @click="addTable">추가</button>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+              <button class="btn" :class="tableAddMode === 'single' ? 'btn-primary' : 'btn-secondary'" style="flex:1;" @click="tableAddMode = 'single'">단일</button>
+              <button class="btn" :class="tableAddMode === 'range' ? 'btn-primary' : 'btn-secondary'" style="flex:1;" @click="tableAddMode = 'range'">범위</button>
+            </div>
+            <div class="add-table-input" v-if="tableAddMode === 'single'">
+              <input type="number" v-model.number="newTableNumber" class="form-input" placeholder="테이블 번호" />
+              <button class="btn btn-primary" style="min-width:80px; white-space:nowrap;" @click="addTable">추가</button>
+            </div>
+            <div class="add-table-input" v-else>
+              <input type="number" v-model.number="tableRangeStart" class="form-input" placeholder="시작" />
+              <span style="color:#a1a1aa; padding: 0 4px;">~</span>
+              <input type="number" v-model.number="tableRangeEnd" class="form-input" placeholder="끝" />
+              <button class="btn btn-primary" style="min-width:80px; white-space:nowrap;" @click="addTableRange">추가</button>
             </div>
           </div>
         </div>
@@ -207,8 +217,8 @@
               <div v-if="expandedOptions.includes(option.optionId)" class="accordion-body">
                 <!-- 옵션명 수정 -->
                 <div class="option-name-edit">
-                  <input type="text" v-model="option.optionName" class="form-input" placeholder="옵션 그룹명" />
-                  <button class="btn btn-secondary btn-sm" @click="updateOption(option)">저장</button>
+                  <input type="text" v-model="option.optionName" class="form-input" placeholder="옵션명" />
+                  <button class="btn btn-secondary" style="min-width:60px; white-space:nowrap;" @click="updateOption(option)">수정</button>
                 </div>
 
                 <!-- 옵션 상세 목록 -->
@@ -216,7 +226,7 @@
                   <div v-for="detail in option.details" :key="detail.optionDetailId" class="option-item">
                     <input type="text" v-model="detail.optionDetailName" class="form-input" placeholder="옵션 상세명" />
                     <input type="number" v-model.number="detail.optionDetailPrice" class="form-input" placeholder="추가금액" />
-                    <button class="btn btn-secondary btn-sm" @click="updateOptionDetail(detail)">저장</button>
+                    <button class="btn btn-secondary" style="min-width:60px; white-space:nowrap;" @click="updateOptionDetail(detail)">수정</button>
                     <button class="remove-option-btn" @click="deleteOptionDetail(detail.optionDetailId, option.optionId)">×</button>
                   </div>
                 </div>
@@ -326,6 +336,9 @@ const activeModal = ref(null)
 // ── 테이블 ──
 const tables = ref([])
 const newTableNumber = ref(null)
+const tableAddMode = ref('single')
+const tableRangeStart = ref(null)
+const tableRangeEnd = ref(null)
 
 // ── 메뉴 ──
 const menuList = ref([])
@@ -360,7 +373,9 @@ onMounted(async () => {
 const loadTables = async () => {
   try {
     const res = await api.get('/customertable/gettablelist')
-    tables.value = res.data.map(t => ({ id: t.customerTableId, number: t.tableNum }))
+    tables.value = res.data
+      .map(t => ({ id: t.customerTableId, number: t.tableNum }))
+      .sort((a, b) => a.number - b.number)
   } catch (e) {
     console.error('테이블 목록 로딩 실패:', e)
   }
@@ -407,6 +422,23 @@ const addTable = async () => {
     await api.post('/customertable/create', { tableNum: newTableNumber.value })
     alert('테이블이 추가되었습니다.')
     newTableNumber.value = null
+    await loadTables()
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '테이블 추가 실패')
+  }
+}
+
+const addTableRange = async () => {
+  if (!tableRangeStart.value || !tableRangeEnd.value) return alert('시작과 끝 번호를 입력하세요.')
+  if (tableRangeStart.value > tableRangeEnd.value) return alert('시작 번호가 끝 번호보다 클 수 없어요.')
+  if (tableRangeEnd.value - tableRangeStart.value > 49) return alert('한 번에 최대 50개까지 추가할 수 있어요.')
+  try {
+    for (let i = tableRangeStart.value; i <= tableRangeEnd.value; i++) {
+      await api.post('/customertable/create', { tableNum: i })
+    }
+    alert(`${tableRangeStart.value}번 ~ ${tableRangeEnd.value}번 테이블이 추가되었습니다.`)
+    tableRangeStart.value = null
+    tableRangeEnd.value = null
     await loadTables()
   } catch (e) {
     alert(e.response?.data?.errorMessage || '테이블 추가 실패')
@@ -490,7 +522,7 @@ const openMenuDetail = async (menu) => {
     //         options: [{ optionId, optionName, details: [{ optionDetailId, optionDetailName, optionDetailPrice }] }] }
     const res = await api.get(`/store/menu/${menu.menuId}/detail`)
     editMenu.value = {
-      id: res.data.menuId,
+      id: menu.menuId,
       menuName: res.data.menuName,
       price: res.data.price,
       categoryId: res.data.categoryId,
@@ -536,6 +568,7 @@ const saveMenuEdit = async () => {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     alert('메뉴 정보가 수정되었습니다.')
+    activeModal.value = null
     await loadMenus()
   } catch (e) {
     alert(e.response?.data?.errorMessage || '메뉴 수정 실패')
@@ -565,9 +598,9 @@ const toggleOption = (optionId) => {
 // ── 옵션 추가 (수정 화면) ──
 const addOption = async () => {
   try {
-    const res = await api.post(`/store/menu/${editMenu.value.id}/option`, { optionName: '새 옵션' })
+    const res = await api.post(`/store/menu/${editMenu.value.id}/option`, { optionName: '' })
     const newOptionId = res.data
-    editMenu.value.options.push({ optionId: newOptionId, optionName: '새 옵션', details: [] })
+    editMenu.value.options.push({ optionId: newOptionId, optionName: '', details: [] })
     expandedOptions.value.push(newOptionId) // 추가 즉시 펼침
   } catch (e) {
     alert(e.response?.data?.errorMessage || '옵션 추가 실패')
@@ -600,11 +633,11 @@ const deleteOption = async (optionId) => {
 const addOptionDetail = async (option) => {
   try {
     const res = await api.post(`/store/menu/option/${option.optionId}/detail`, {
-      optionDetailName: '새 옵션 상세',
+      optionDetailName: '',
       optionDetailPrice: 0,
     })
     const newDetailId = res.data
-    option.details.push({ optionDetailId: newDetailId, optionDetailName: '새 옵션 상세', optionDetailPrice: 0 })
+    option.details.push({ optionDetailId: newDetailId, optionDetailName: '', optionDetailPrice: 0 })
   } catch (e) {
     alert(e.response?.data?.errorMessage || '옵션 상세 추가 실패')
   }
