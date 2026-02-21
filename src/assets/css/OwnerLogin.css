@@ -1,0 +1,485 @@
+/* ==================== 페이지 레이아웃 ==================== */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--bg-dark, #0a0a0a);
+}
+
+/* ==================== 로그인 컨테이너 ==================== */
+.login-container {
+  width: 100%;
+  max-width: 480px;
+  background: var(--card, #27272a);
+  border-radius: 24px;
+  border: 1px solid var(--border, #3f3f46);
+  padding: 48px 40px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary, #ea580c) 0%, var(--primary-light, #fb923c) 100%);
+}
+
+/* ==================== 로고 영역 ==================== */
+.logo-area {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.logo-title {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--primary, #ea580c);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+}
+
+.logo-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary, #a1a1aa);
+  font-weight: 500;
+}
+
+/* ==================== 타이틀 ==================== */
+.login-title {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--text, #fafafa);
+  text-align: center;
+  margin-bottom: 36px;
+  letter-spacing: -0.5px;
+}
+
+/* ==================== 입력 폼 ==================== */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #a1a1aa);
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 16px 18px;
+  background: var(--bg-secondary, #18181b);
+  border: 1px solid var(--border, #3f3f46);
+  border-radius: 12px;
+  color: var(--text, #fafafa);
+  font-size: 15px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: var(--text-secondary, #a1a1aa);
+  opacity: 0.6;
+}
+
+.form-input:focus {
+  border-color: var(--primary, #ea580c);
+  background: var(--bg-dark, #0a0a0a);
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+}
+
+.form-input:hover {
+  border-color: rgba(234, 88, 12, 0.5);
+}
+
+/* ==================== 로그인 버튼 ==================== */
+.login-btn {
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(135deg, var(--primary, #ea580c) 0%, var(--primary-dark, #c2410c) 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 28px;
+  box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3);
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(234, 88, 12, 0.4);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+}
+
+.login-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ==================== 하단 링크 ==================== */
+.login-footer {
+  margin-top: 32px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.footer-link {
+  font-size: 13px;
+  color: var(--text-secondary, #a1a1aa);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.footer-link:hover {
+  color: var(--primary-light, #fb923c);
+}
+
+.footer-divider {
+  color: var(--border, #3f3f46);
+  user-select: none;
+}
+
+/* ==================== 에러/성공 메시지 ==================== */
+.error-message {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.success-message {
+  margin-top: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 8px;
+  color: #22c55e;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==================== 모달 ==================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s;
+  padding: 20px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--card, #27272a);
+  border-radius: 20px;
+  border: 1px solid var(--border, #3f3f46);
+  padding: 36px 32px;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s;
+  position: relative;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary, #ea580c) 0%, var(--primary-light, #fb923c) 100%);
+  border-radius: 20px 20px 0 0;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.modal-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text, #fafafa);
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  background: var(--bg-secondary, #18181b);
+  border: 1px solid var(--border, #3f3f46);
+  border-radius: 8px;
+  color: var(--text-secondary, #a1a1aa);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: var(--card-hover, #3f3f46);
+  color: var(--text, #fafafa);
+}
+
+/* ==================== 인증 입력 그룹 ==================== */
+.verification-group {
+  display: flex;
+  gap: 8px;
+}
+
+.verification-group input {
+  flex: 1;
+}
+
+.verification-btn {
+  padding: 16px 20px;
+  background: var(--primary, #ea580c);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.verification-btn:hover {
+  background: var(--primary-dark, #c2410c);
+}
+
+.verification-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==================== 버튼 그룹 ==================== */
+.btn-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--primary, #ea580c) 0%, var(--primary-dark, #c2410c) 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 16px;
+  background: var(--bg-secondary, #18181b);
+  border: 1px solid var(--border, #3f3f46);
+  border-radius: 12px;
+  color: var(--text, #fafafa);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: var(--card-hover, #3f3f46);
+}
+
+/* ==================== 결과 박스 ==================== */
+.result-box {
+  background: var(--bg-secondary, #18181b);
+  border: 1px solid var(--border, #3f3f46);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.result-label {
+  font-size: 13px;
+  color: var(--text-secondary, #a1a1aa);
+  margin-bottom: 8px;
+}
+
+.result-value {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--primary, #ea580c);
+}
+
+/* ==================== 완료 화면 ==================== */
+.complete-icon {
+  font-size: 64px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.complete-message {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text, #fafafa);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.complete-submessage {
+  font-size: 14px;
+  color: var(--text-secondary, #a1a1aa);
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+/* ==================== 유틸리티 ==================== */
+.full-width {
+  width: 100%;
+}
+
+.mt-20 {
+  margin-top: 20px;
+}
+
+/* ==================== 로딩 애니메이션 ==================== */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.6s linear infinite;
+}
+
+/* ==================== 반응형 ==================== */
+@media (max-width: 640px) {
+  .login-container {
+    padding: 36px 28px;
+  }
+
+  .logo-title {
+    font-size: 28px;
+  }
+
+  .login-title {
+    font-size: 24px;
+  }
+
+  .login-footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .footer-divider {
+    display: none;
+  }
+
+  .modal-content {
+    padding: 28px 24px;
+  }
+
+  .verification-group {
+    flex-direction: column;
+  }
+
+  .verification-btn {
+    width: 100%;
+  }
+  /* 로딩 애니메이션 추가 */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+}

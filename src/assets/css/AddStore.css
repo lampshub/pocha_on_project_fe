@@ -1,0 +1,339 @@
+/* ── CSS 변수 ─────────────────────────────────────── */
+.form-page {
+    --primary:        #ea580c;
+    --primary-dark:   #c2410c;
+    --primary-light:  #fb923c;
+    --bg-dark:        #0a0a0a;
+    --bg-secondary:   #18181b;
+    --card:           #27272a;
+    --card-hover:     #3f3f46;
+    --text:           #fafafa;
+    --text-secondary: #a1a1aa;
+    --border:         #3f3f46;
+
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+    background: var(--bg-dark);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* ── 컨테이너 ─────────────────────────────────────── */
+.store-form-container {
+    width: 100%;
+    max-width: 600px;
+    background: var(--card);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    padding: 48px 40px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 상단 오렌지 라인 */
+.store-form-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+}
+
+/* ── 타이틀 ───────────────────────────────────────── */
+.form-title {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--text);
+    text-align: center;
+    margin-bottom: 40px;
+    letter-spacing: -0.5px;
+}
+
+/* ── 폼 그룹 ──────────────────────────────────────── */
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+    letter-spacing: 0.3px;
+}
+
+.required {
+    color: var(--primary);
+    margin-left: 4px;
+}
+
+/* ── 입력 필드 ────────────────────────────────────── */
+.form-input {
+    width: 100%;
+    padding: 16px 18px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.form-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.form-input:hover {
+    border-color: rgba(234, 88, 12, 0.5);
+}
+
+.form-input:focus {
+    border-color: var(--primary);
+    background: var(--bg-dark);
+    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+}
+
+/* 상세 주소 위 여백 */
+.address-detail {
+    margin-top: 12px;
+}
+
+/* ── 영업시간 그룹 ────────────────────────────────── */
+.time-group {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.time-input-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.time-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.time-input {
+    font-variant-numeric: tabular-nums;
+}
+
+.time-separator {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    padding-bottom: 16px;
+    flex-shrink: 0;
+}
+
+/* ── 도움말 / 피드백 ──────────────────────────────── */
+.help-text {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.error-message {
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    color: #ef4444;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.success-message {
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 12px;
+    color: #10b981;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* ── 버튼 ─────────────────────────────────────────── */
+.submit-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 32px;
+    box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3);
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(234, 88, 12, 0.4);
+}
+
+.submit-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cancel-btn {
+    width: 100%;
+    padding: 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 12px;
+}
+
+.cancel-btn:hover:not(:disabled) {
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.cancel-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── 로딩 스피너 ──────────────────────────────────── */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.6s linear infinite;
+}
+
+/* ── 반응형 ───────────────────────────────────────── */
+@media (max-width: 640px) {
+    .store-form-container {
+        padding: 36px 28px;
+    }
+
+    .form-title {
+        font-size: 28px;
+    }
+
+    .time-group {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .time-separator {
+        display: none;
+    }
+}
+/* ── 취소 모달 ────────────────────────────────────── */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 10, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.modal-box {
+    background: var(--card);
+    border: 1px solid var(--card-hover);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.modal-text {
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-btn.confirm {
+    background: var(--primary);
+    border: none;
+    color: #fff;
+}
+
+.modal-btn.confirm:hover {
+    background: var(--primary-dark);
+}
+
+.modal-btn.cancel {
+    background: var(--card-hover);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+
+.modal-btn.cancel:hover {
+    border-color: var(--primary);
+    color: var(--text);
+}
