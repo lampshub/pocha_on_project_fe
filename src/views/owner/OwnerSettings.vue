@@ -56,18 +56,18 @@
           <div class="add-table-section">
             <div class="form-label">테이블 추가</div>
             <div style="display:flex; gap:8px; margin-bottom:8px;">
-              <button class="btn" :class="tableAddMode === 'single' ? 'btn-primary' : 'btn-secondary'" style="flex:1;" @click="tableAddMode = 'single'">단일</button>
-              <button class="btn" :class="tableAddMode === 'range' ? 'btn-primary' : 'btn-secondary'" style="flex:1;" @click="tableAddMode = 'range'">범위</button>
+              <button class="btn" :class="tableAddMode === 'single' ? 'btn-primary' : 'btn-secondary'" style="flex:1; padding-top:4px; padding-bottom:4px;" @click="tableAddMode = 'single'">단일</button>
+              <button class="btn" :class="tableAddMode === 'range' ? 'btn-primary' : 'btn-secondary'" style="flex:1; padding-top:4px; padding-bottom:4px;" @click="tableAddMode = 'range'">범위</button>
             </div>
-            <div class="add-table-input" v-if="tableAddMode === 'single'">
-              <input type="number" v-model.number="newTableNumber" class="form-input" placeholder="테이블 번호" />
-              <button class="btn btn-primary" style="min-width:80px; white-space:nowrap;" @click="addTable">추가</button>
+            <div v-if="tableAddMode === 'single'" style="display:flex; gap:8px; align-items:center; min-height:48px;">
+              <input type="number" v-model.number="newTableNumber" class="form-input" placeholder="테이블 번호" style="flex:1;" />
+              <button style="padding: 12px 12px; background:#ea580c; color:white; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; flex-shrink:0;" @click="addTable">추가</button>
             </div>
-            <div class="add-table-input" v-else>
-              <input type="number" v-model.number="tableRangeStart" class="form-input" placeholder="시작" />
-              <span style="color:#a1a1aa; padding: 0 4px;">~</span>
-              <input type="number" v-model.number="tableRangeEnd" class="form-input" placeholder="끝" />
-              <button class="btn btn-primary" style="min-width:80px; white-space:nowrap;" @click="addTableRange">추가</button>
+            <div v-else style="display:flex; gap:8px; align-items:center; min-height:48px;">
+              <input type="number" v-model.number="tableRangeStart" class="form-input" placeholder="시작" style="flex:1;" />
+              <span>~</span>
+              <input type="number" v-model.number="tableRangeEnd" class="form-input" placeholder="끝" style="flex:1;" />
+              <button class="btn btn-primary" @click="addTableRange">추가</button>
             </div>
           </div>
         </div>
@@ -84,14 +84,8 @@
         <div class="modal-body">
           <div class="form-group">
             <label class="form-label">메뉴 이미지</label>
-            <div class="image-upload-area" :class="{ 'has-image': newMenu.imagePreview }" @click="$refs.imageInput.click()">
-              <input type="file" ref="imageInput" @change="handleImageUpload" accept="image/*" style="display:none" />
-              <img v-if="newMenu.imagePreview" :src="newMenu.imagePreview" class="preview-image" />
-              <div v-else class="upload-placeholder">
-                <div class="upload-icon">📸</div>
-                <div class="upload-text">클릭하여 이미지 업로드</div>
-              </div>
-            </div>
+            <input type="file" accept="image/*" @change="handleImageUpload" class="form-input" />
+            <img v-if="newMenu.imagePreview" :src="newMenu.imagePreview" style="width:100px; height:100px; object-fit:cover; margin-top:8px; border-radius:8px;" />
           </div>
           <div class="form-group">
             <label class="form-label">카테고리</label>
@@ -118,7 +112,6 @@
             <label class="form-label">설명</label>
             <textarea v-model="newMenu.description" class="form-textarea" placeholder="메뉴 설명을 입력하세요"></textarea>
           </div>
-
           <!-- 옵션 섹션 -->
           <div class="form-group">
             <label class="form-label">옵션</label>
@@ -131,7 +124,7 @@
                 <div v-for="(detail, dIdx) in option.details" :key="dIdx" class="option-item">
                   <input type="text" v-model="detail.optionDetailName" class="form-input" placeholder="옵션 상세명" />
                   <input type="number" v-model.number="detail.optionDetailPrice" class="form-input" placeholder="추가금액" />
-                  <button class="remove-option-btn" @click="option.details.splice(dIdx, 1)">×</button>
+                  <button class="remove-option-btn" style="display:flex; align-items:center; justify-content:center; line-height:1;" @click="option.details.splice(dIdx, 1)">×</button>
                 </div>
               </div>
               <button class="add-option-detail-btn" @click="option.details.push({ optionDetailName: '', optionDetailPrice: 0 })">+ 옵션 상세 추가</button>
@@ -171,10 +164,18 @@
     <div v-if="activeModal === 'menuDetail' && editMenu" class="modal-overlay" @click.self="activeModal = null">
       <div class="modal-content large">
         <div class="modal-header">
-          <div class="modal-title">메뉴 상세 수정</div>
+          <div class="modal-title">메뉴 수정</div>
           <button class="close-btn" @click="activeModal = null">×</button>
         </div>
         <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">메뉴 이름</label>
+            <input type="text" v-model="editMenu.menuName" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">가격 (원)</label>
+            <input type="number" v-model.number="editMenu.price" class="form-input" />
+          </div>
           <div class="form-group">
             <label class="form-label">카테고리</label>
             <select v-model="editMenu.categoryId" class="form-select">
@@ -185,14 +186,6 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">메뉴 이름</label>
-            <input type="text" v-model="editMenu.menuName" class="form-input" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">가격 (원)</label>
-            <input type="number" v-model.number="editMenu.price" class="form-input" />
-          </div>
-          <div class="form-group">
             <label class="form-label">원산지</label>
             <input type="text" v-model="editMenu.origin" class="form-input" />
           </div>
@@ -200,41 +193,36 @@
             <label class="form-label">설명</label>
             <textarea v-model="editMenu.explanation" class="form-textarea"></textarea>
           </div>
+          <div class="form-group">
+            <label class="form-label">메뉴 이미지 변경</label>
+            <input type="file" accept="image/*" @change="(e) => { editMenu.imageFile = e.target.files[0] }" class="form-input" />
+          </div>
 
           <!-- 옵션 아코디언 -->
           <div class="form-group">
             <label class="form-label">옵션</label>
-
             <div v-for="option in editMenu.options" :key="option.optionId" class="option-group">
-              <!-- 옵션 헤더 - 클릭하면 펼침/접음 -->
-              <div class="option-header accordion-header" @click="toggleOption(option.optionId)">
-                <span class="option-title">{{ option.optionName || '(이름 없음)' }}</span>
+              <div class="accordion-header option-header" @click="toggleOption(option.optionId)">
+                <span class="option-title">{{ option.optionName || '(옵션명 없음)' }}</span>
                 <span class="accordion-arrow">{{ expandedOptions.includes(option.optionId) ? '▲' : '▼' }}</span>
                 <button class="remove-option-btn" @click.stop="deleteOption(option.optionId)">삭제</button>
               </div>
-
-              <!-- 펼쳐진 상태 -->
               <div v-if="expandedOptions.includes(option.optionId)" class="accordion-body">
-                <!-- 옵션명 수정 -->
                 <div class="option-name-edit">
                   <input type="text" v-model="option.optionName" class="form-input" placeholder="옵션명" />
                   <button class="btn btn-secondary" style="min-width:60px; white-space:nowrap;" @click="updateOption(option)">수정</button>
                 </div>
-
-                <!-- 옵션 상세 목록 -->
                 <div class="option-items">
                   <div v-for="detail in option.details" :key="detail.optionDetailId" class="option-item">
                     <input type="text" v-model="detail.optionDetailName" class="form-input" placeholder="옵션 상세명" />
                     <input type="number" v-model.number="detail.optionDetailPrice" class="form-input" placeholder="추가금액" />
                     <button class="btn btn-secondary" style="min-width:60px; white-space:nowrap;" @click="updateOptionDetail(detail)">수정</button>
-                    <button class="remove-option-btn" @click="deleteOptionDetail(detail.optionDetailId, option.optionId)">×</button>
+                    <button class="remove-option-btn" style="display:flex; align-items:center; justify-content:center; line-height:1;" @click="deleteOptionDetail(detail.optionDetailId, option.optionId)">×</button>
                   </div>
                 </div>
                 <button class="add-option-detail-btn" @click="addOptionDetail(option)">+ 옵션 상세 추가</button>
               </div>
             </div>
-
-            <!-- 새 옵션 그룹 추가 -->
             <button class="add-option-btn" @click="addOption">+ 옵션 추가</button>
           </div>
         </div>
@@ -304,15 +292,27 @@
               <div v-if="editingPassword" class="edit-form">
                 <div class="edit-form-group">
                   <label>기존 비밀번호</label>
-                  <input v-model="oldPassword" type="password" placeholder="기존 비밀번호 입력" />
+                  <div style="position:relative;">
+                    <input v-model="oldPassword" :type="showOldPassword ? 'text' : 'password'" placeholder="기존 비밀번호 입력" style="width:100%; padding-right:48px;" />
+                    <button type="button" @click="showOldPassword = !showOldPassword"
+                      style="position:absolute; right:6px; top:50%; transform:translateY(-50%); padding:2px 6px; font-size:11px; background:#3f3f46; color:#a1a1aa; border:none; border-radius:4px; cursor:pointer;">
+                      {{ showOldPassword ? '숨김' : '보기' }}
+                    </button>
+                  </div>
                 </div>
                 <div class="edit-form-group">
                   <label>새 비밀번호</label>
-                  <input v-model="newPassword" type="password" placeholder="새 비밀번호 (8자 이상)" />
+                  <div style="position:relative;">
+                    <input v-model="newPassword" :type="showNewPassword ? 'text' : 'password'" placeholder="새 비밀번호 (8자 이상)" style="width:100%; padding-right:48px;" />
+                    <button type="button" @click="showNewPassword = !showNewPassword"
+                      style="position:absolute; right:6px; top:50%; transform:translateY(-50%); padding:2px 6px; font-size:11px; background:#3f3f46; color:#a1a1aa; border:none; border-radius:4px; cursor:pointer;">
+                      {{ showNewPassword ? '숨김' : '보기' }}
+                    </button>
+                  </div>
                 </div>
                 <div class="edit-form-actions">
-                  <button class="btn btn-primary btn-sm" @click="savePassword">변경</button>
-                  <button class="btn btn-secondary btn-sm" @click="cancelPasswordEdit">취소</button>
+                  <button class="btn btn-primary btn-sm" style="padding-top:4px; padding-bottom:4px;" @click="savePassword">변경</button>
+                  <button class="btn btn-secondary btn-sm" style="padding-top:4px; padding-bottom:4px;" @click="cancelPasswordEdit">취소</button>
                 </div>
               </div>
             </div>
@@ -321,6 +321,7 @@
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -351,10 +352,10 @@ const newMenu = reactive({
   price: 0,
   origin: '',
   description: '',
-  options: [], // [{ optionName, details: [{ optionDetailName, optionDetailPrice }] }]
+  options: [],
 })
 const editMenu = ref(null)
-const expandedOptions = ref([]) // 수정 화면에서 펼쳐진 optionId 목록
+const expandedOptions = ref([])
 
 // ── 영업시간 ──
 const businessHours = reactive({ open: '10:00', close: '22:00' })
@@ -364,6 +365,8 @@ const ownerInfo = reactive({ name: '', email: '', phone: '', businessNumber: '' 
 const editingPassword = ref(false)
 const oldPassword = ref('')
 const newPassword = ref('')
+const showOldPassword = ref(false)  // ✅ 추가
+const showNewPassword = ref(false)  // ✅ 추가
 
 // ── 초기 로딩 ──
 onMounted(async () => {
@@ -384,7 +387,6 @@ const loadTables = async () => {
 const loadMenus = async () => {
   try {
     const res = await api.get('/view/all')
-    // 응답: [{ menuId, menuName, menuPrice, imageUrl }]
     menuList.value = res.data
   } catch (e) {
     console.error('메뉴 목록 로딩 실패:', e)
@@ -394,7 +396,6 @@ const loadMenus = async () => {
 const loadCategories = async () => {
   try {
     const res = await api.get('/view/category')
-    // 응답: [{ categoryId, categoryName, mappingMenuList }]
     categories.value = res.data
   } catch (e) {
     console.error('카테고리 로딩 실패:', e)
@@ -468,7 +469,6 @@ const handleImageUpload = (e) => {
 const registerMenu = async () => {
   if (!newMenu.name || !newMenu.categoryId || !newMenu.price) return alert('필수 항목을 모두 입력하세요.')
   try {
-    // 1. 메뉴 등록 → menuId 반환
     const formData = new FormData()
     formData.append('menuName', newMenu.name)
     formData.append('price', newMenu.price)
@@ -480,17 +480,15 @@ const registerMenu = async () => {
     const menuRes = await api.post('/store/menu/create', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    const menuId = menuRes.data // 백엔드: body(menuId)
+    const menuId = menuRes.data
 
-    // 2. 옵션 그룹 순서대로 등록
     for (const option of newMenu.options) {
       if (!option.optionName.trim()) continue
       const optionRes = await api.post(`/store/menu/${menuId}/option`, {
         optionName: option.optionName,
       })
-      const optionId = optionRes.data // 백엔드: body(optionId)
+      const optionId = optionRes.data
 
-      // 3. 옵션 상세 등록
       for (const detail of option.details) {
         if (!detail.optionDetailName.trim()) continue
         await api.post(`/store/menu/option/${optionId}/detail`, {
@@ -516,10 +514,6 @@ const registerMenu = async () => {
 const openMenuDetail = async (menu) => {
   expandedOptions.value = []
   try {
-    // 백엔드에 새로 만들 점주용 상세 API
-    // GET /store/menu/{menuId}/detail
-    // 응답: { menuId, menuName, price, categoryId, origin, explanation, imageUrl,
-    //         options: [{ optionId, optionName, details: [{ optionDetailId, optionDetailName, optionDetailPrice }] }] }
     const res = await api.get(`/store/menu/${menu.menuId}/detail`)
     editMenu.value = {
       id: menu.menuId,
@@ -539,7 +533,6 @@ const openMenuDetail = async (menu) => {
       })),
     }
   } catch (e) {
-    // 백엔드 API 미완성 시 fallback
     editMenu.value = {
       id: menu.menuId,
       menuName: menu.menuName,
@@ -595,13 +588,13 @@ const toggleOption = (optionId) => {
   else expandedOptions.value.splice(idx, 1)
 }
 
-// ── 옵션 추가 (수정 화면) ──
+// ── 옵션 추가 ──
 const addOption = async () => {
   try {
     const res = await api.post(`/store/menu/${editMenu.value.id}/option`, { optionName: '' })
     const newOptionId = res.data
     editMenu.value.options.push({ optionId: newOptionId, optionName: '', details: [] })
-    expandedOptions.value.push(newOptionId) // 추가 즉시 펼침
+    expandedOptions.value.push(newOptionId)
   } catch (e) {
     alert(e.response?.data?.errorMessage || '옵션 추가 실패')
   }
@@ -672,7 +665,7 @@ const deleteOptionDetail = async (optionDetailId, optionId) => {
 const saveBusinessHours = async () => {
   const storeId = localStorage.getItem('currentStoreId')
   try {
-    await api.patch(`/store/${storeId}/updateTime`, {
+    await api.patch(`/store/${storeId}/updatetime`, {
       openAt: businessHours.open + ':00',
       closeAt: businessHours.close + ':00',
     })
@@ -702,6 +695,8 @@ const cancelPasswordEdit = () => {
   editingPassword.value = false
   oldPassword.value = ''
   newPassword.value = ''
+  showOldPassword.value = false  // ✅ 추가
+  showNewPassword.value = false  // ✅ 추가
 }
 
 const logout = () => {
@@ -740,5 +735,22 @@ const logout = () => {
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
+}
+.remove-option-btn {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  flex-shrink: 0;
+  align-self: center !important;
+}
+.btn-add-small {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  flex-shrink: 0;
+  width: auto !important;
 }
 </style>
