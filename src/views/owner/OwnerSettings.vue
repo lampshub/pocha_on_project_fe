@@ -26,7 +26,7 @@
           <div class="settings-card-title">메뉴 수정</div>
           <div class="settings-card-desc">기존 메뉴 편집 및 삭제</div>
         </div>
-        <div class="settings-card" @click="activeModal = 'hours'">
+        <div class="settings-card" @click="openHoursModal">
           <div class="settings-icon">🕐</div>
           <div class="settings-card-title">영업시간 관리</div>
           <div class="settings-card-desc">영업 시간 설정</div>
@@ -60,13 +60,13 @@
               <button class="btn" :class="tableAddMode === 'range' ? 'btn-primary' : 'btn-secondary'" style="flex:1; padding-top:4px; padding-bottom:4px;" @click="tableAddMode = 'range'">범위</button>
             </div>
             <div v-if="tableAddMode === 'single'" style="display:flex; gap:8px; align-items:center; min-height:48px;">
-              <input type="number" v-model.number="newTableNumber" class="form-input" placeholder="테이블 번호" style="flex:1;" />
+              <input type="number" v-model.number="newTableNumber" class="form-input" placeholder="테이블 번호" style="flex:1;" min="1" />
               <button style="padding: 12px 12px; background:#ea580c; color:white; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; flex-shrink:0;" @click="addTable">추가</button>
             </div>
             <div v-else style="display:flex; gap:8px; align-items:center; min-height:48px;">
-              <input type="number" v-model.number="tableRangeStart" class="form-input" placeholder="시작" style="flex:1;" />
+              <input type="number" v-model.number="tableRangeStart" class="form-input" placeholder="시작" style="flex:1;" min="1" />
               <span>~</span>
-              <input type="number" v-model.number="tableRangeEnd" class="form-input" placeholder="끝" style="flex:1;" />
+              <input type="number" v-model.number="tableRangeEnd" class="form-input" placeholder="끝" style="flex:1;" min="1" />
               <button class="btn btn-primary" @click="addTableRange">추가</button>
             </div>
           </div>
@@ -99,7 +99,6 @@
               <div v-if="showRegisterCategoryDropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; background:#27272a; border:1px solid #3f3f46; border-radius:8px; z-index:100; overflow:hidden;">
                 <div v-for="cat in categories" :key="cat.categoryId"
                   style="border-bottom:1px solid #3f3f46;">
-                  <!-- 일반 행 -->
                   <div v-if="editingCategoryId !== cat.categoryId"
                     style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px;"
                     :style="{ background: newMenu.categoryId === cat.categoryId ? '#3f3f46' : '' }">
@@ -111,7 +110,6 @@
                       @mouseout="$event.target.style.cssText='padding:2px 8px;font-size:11px;background:transparent;color:#a1a1aa;border:1px solid #3f3f46;border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:8px;'"
                     >수정</button>
                   </div>
-                  <!-- 수정 중인 행 -->
                   <div v-else style="display:flex; gap:4px; align-items:center; padding:8px 12px; background:#18181b;">
                     <input v-model="editingCategoryName" type="text"
                       style="flex:1; height:34px; padding:0 8px; background:#27272a; border:1px solid #ea580c; border-radius:6px; color:#fafafa; font-size:13px;"
@@ -233,7 +231,6 @@
               <div v-if="showEditCategoryDropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; background:#27272a; border:1px solid #3f3f46; border-radius:8px; z-index:100; overflow:hidden;">
                 <div v-for="cat in categories" :key="cat.categoryId"
                   style="border-bottom:1px solid #3f3f46;">
-                  <!-- 일반 행 -->
                   <div v-if="editingCategoryId !== cat.categoryId"
                     style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px;"
                     :style="{ background: editMenu.categoryId === cat.categoryId ? '#3f3f46' : '' }">
@@ -245,7 +242,6 @@
                       @mouseout="$event.target.style.cssText='padding:2px 8px;font-size:11px;background:transparent;color:#a1a1aa;border:1px solid #3f3f46;border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:8px;'"
                     >수정</button>
                   </div>
-                  <!-- 수정 중인 행 -->
                   <div v-else style="display:flex; gap:4px; align-items:center; padding:8px 12px; background:#18181b;">
                     <input v-model="editingCategoryName" type="text"
                       style="flex:1; height:34px; padding:0 8px; background:#27272a; border:1px solid #ea580c; border-radius:6px; color:#fafafa; font-size:13px;"
@@ -448,7 +444,29 @@ const showEditCategoryInput = ref(false)
 const newCategoryName = ref('')
 
 // ── 영업시간 ──
-const businessHours = reactive({ open: '10:00', close: '22:00' })
+const businessHours = reactive({
+  open: '10:00',
+  close: '22:00'
+})
+
+const openHoursModal = async () => {
+  const storeId = localStorage.getItem('currentStoreId')
+
+  if (!storeId) {
+    alert('매장 정보가 없습니다.')
+    return
+  }
+
+  try {
+    const res = await api.get(`/store/${storeId}/time`)
+    businessHours.open = res.data.openAt?.slice(0, 5)
+    businessHours.close = res.data.closeAt?.slice(0, 5)
+  } catch (e) {
+    console.error(e)
+  }
+
+  activeModal.value = 'hours'
+}
 
 // ── 마이페이지 ──
 const ownerInfo = reactive({ name: '', email: '', phone: '', businessNumber: '' })
@@ -477,7 +495,6 @@ const loadTables = async () => {
 const loadMenus = async () => {
   try {
     const res = await api.get('/view/all')
-    console.log('menuList 로딩 결과:', res.data)
     menuList.value = Array.isArray(res.data) ? res.data : []
   } catch (e) {
     console.error('메뉴 목록 로딩 실패:', e)
@@ -493,13 +510,21 @@ const loadCategories = async () => {
   }
 }
 
+// ── 사업자등록번호 포맷 (000-00-00000) ──
+const formatBusinessNumber = (value) => {
+  const digits = (value || '').replace(/\D/g, '').slice(0, 10)
+  if (digits.length <= 3) return digits
+  if (digits.length <= 5) return `${digits.slice(0,3)}-${digits.slice(3)}`
+  return `${digits.slice(0,3)}-${digits.slice(3,5)}-${digits.slice(5)}`
+}
+
 const loadMyPage = async () => {
   try {
     const res = await api.get('/owner/mypage')
     ownerInfo.name = res.data.ownerName
     ownerInfo.email = res.data.ownerEmail
     ownerInfo.phone = res.data.phoneNumber
-    ownerInfo.businessNumber = res.data.BusinessRegistrationNumber
+    ownerInfo.businessNumber = formatBusinessNumber(res.data.businessRegistrationNumber || '')
   } catch (e) {
     console.error('마이페이지 로딩 실패:', e)
   }
@@ -509,7 +534,10 @@ const formatPrice = (price) => (price ?? 0).toLocaleString('ko-KR')
 
 // ── 테이블 ──
 const addTable = async () => {
-  if (!newTableNumber.value) return alert('테이블 번호를 입력하세요.')
+  if (newTableNumber.value === null || newTableNumber.value === undefined || newTableNumber.value === '') {
+    return alert('테이블 번호를 입력하세요.')
+  }
+  if (newTableNumber.value < 1) return alert('테이블 번호는 1 이상이어야 합니다.')
   try {
     await api.post('/customertable/create', { tableNum: newTableNumber.value })
     alert('테이블이 추가되었습니다.')
@@ -522,6 +550,7 @@ const addTable = async () => {
 
 const addTableRange = async () => {
   if (!tableRangeStart.value || !tableRangeEnd.value) return alert('시작과 끝 번호를 입력하세요.')
+  if (tableRangeStart.value < 1 || tableRangeEnd.value < 1) return alert('테이블 번호는 1 이상이어야 합니다.')
   if (tableRangeStart.value > tableRangeEnd.value) return alert('시작 번호가 끝 번호보다 클 수 없어요.')
   if (tableRangeEnd.value - tableRangeStart.value > 49) return alert('한 번에 최대 50개까지 추가할 수 있어요.')
   try {
@@ -610,13 +639,8 @@ const addNewCategory = async (mode) => {
     return
   }
   try {
-    // 백엔드가 새 카테고리 ID를 직접 반환함 (CategoryService.createCategory → return category.getId())
     await api.post('/store/category/create', { categoryName: newCategoryName.value.trim() })
-
-    // 카테고리 목록 갱신
     await loadCategories()
-
-    // 반환된 ID로 바로 자동 선택 (이름 검색보다 확실함)
     if (mode === 'register') {
       newMenu.categoryId = null
       showNewCategoryInput.value = false
@@ -652,7 +676,6 @@ const deleteCategory = async (categoryId) => {
   try {
     await api.delete(`/store/category/${categoryId}`)
     await loadCategories()
-    // 현재 선택된 카테고리가 삭제된 경우 리셋
     if (newMenu.categoryId === categoryId) newMenu.categoryId = null
     if (editMenu.value && editMenu.value.categoryId === categoryId) editMenu.value.categoryId = null
   } catch (e) {
@@ -662,7 +685,6 @@ const deleteCategory = async (categoryId) => {
 
 // ── 메뉴 수정 열기 ──
 const openMenuDetail = async (menu) => {
-  console.log('openMenuDetail 호출됨, menu:', menu)
   const menuId = menu.menuId ?? menu.id
   if (!menuId) {
     alert('메뉴 ID를 찾을 수 없습니다.')
@@ -671,7 +693,6 @@ const openMenuDetail = async (menu) => {
   expandedOptions.value = []
   showEditCategoryInput.value = false
   newCategoryName.value = ''
-  // 기본값으로 모달을 먼저 열기
   editMenu.value = {
     id: menuId,
     menuName: menu.menuName || '',
@@ -683,10 +704,8 @@ const openMenuDetail = async (menu) => {
     options: [],
   }
   activeModal.value = 'menuDetail'
-  // API로 상세 데이터 채우기
   try {
     const res = await api.get(`/store/menu/${menuId}/detail`)
-    console.log('메뉴 상세 API 응답:', res.data)
     editMenu.value = {
       id: menuId,
       menuName: res.data.menuName || '',
@@ -867,7 +886,6 @@ const logout = () => {
 <style scoped>
 @import "@/assets/css/OwnerSettings.css";
 
-/* 카테고리 추가 인라인 버튼 */
 .btn-cat {
   padding: 0 14px !important;
   height: 42px;

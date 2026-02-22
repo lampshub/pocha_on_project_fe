@@ -253,7 +253,12 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { onMounted } from 'vue'
 
+// 페이지 진입시 포커스 제거(커서 깜박임 없앰)
+onMounted(() => {
+  document.activeElement.blur()
+})
 const router = useRouter()
 
 // 로그인 관련 상태
@@ -296,15 +301,13 @@ const handleLogin = async () => {
   } catch (error) {
     console.error('Login Error:', error);
     
-    // 401 Unauthorized 에러 처리
-    if (error.response && error.response.status === 401) {
-      errorMessage.value = '이메일 또는 비밀번호가 일치하지 않습니다.';
-    } else if (error.response && error.response.status === 404) {
-      errorMessage.value = '존재하지 않는 사용자 계정입니다.';
-    } else {
-      errorMessage.value = '로그인 중 오류가 발생했습니다. 서버 상태를 확인하세요.';
-    }
-  } finally {
+    // 401 & 404 Unauthorized 에러 처리
+    if (error.response && (error.response.status === 401 || error.response.status === 404)) {
+    errorMessage.value = '이메일 또는 비밀번호가 일치하지 않습니다.';
+  } else {
+    errorMessage.value = '로그인 중 오류가 발생했습니다. 서버 상태를 확인하세요.';
+  }
+}finally {
     isLoading.value = false
   }
 }
