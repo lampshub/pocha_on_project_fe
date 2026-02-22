@@ -88,20 +88,62 @@
             <img v-if="newMenu.imagePreview" :src="newMenu.imagePreview" style="width:100px; height:100px; object-fit:cover; margin-top:8px; border-radius:8px;" />
           </div>
           <div class="form-group">
-            <label class="form-label">카테고리</label>
-            <select v-model="newMenu.categoryId" class="form-select">
-              <option :value="null" disabled>선택하세요</option>
-              <option v-for="cat in categories" :key="cat.categoryId" :value="cat.categoryId">
-                {{ cat.categoryName }}
-              </option>
-            </select>
+            <label class="form-label">카테고리 <span style="color:#ef4444; margin-left:2px;">*</span></label>
+            <div style="position:relative;">
+              <div class="form-select" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;" @click="showRegisterCategoryDropdown = !showRegisterCategoryDropdown">
+                <span :style="newMenu.categoryId ? 'color:#fafafa' : 'color:#a1a1aa'">
+                  {{ newMenu.categoryId ? (categories.find(c => c.categoryId === newMenu.categoryId) || {}).categoryName : '선택하세요' }}
+                </span>
+                <span style="font-size:11px; color:#a1a1aa;">{{ showRegisterCategoryDropdown ? '▲' : '▼' }}</span>
+              </div>
+              <div v-if="showRegisterCategoryDropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; background:#27272a; border:1px solid #3f3f46; border-radius:8px; z-index:100; overflow:hidden;">
+                <div v-for="cat in categories" :key="cat.categoryId"
+                  style="border-bottom:1px solid #3f3f46;">
+                  <!-- 일반 행 -->
+                  <div v-if="editingCategoryId !== cat.categoryId"
+                    style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px;"
+                    :style="{ background: newMenu.categoryId === cat.categoryId ? '#3f3f46' : '' }">
+                    <span style="font-size:14px; color:#fafafa; flex:1; cursor:pointer;"
+                      @click="newMenu.categoryId = cat.categoryId; showRegisterCategoryDropdown = false">{{ cat.categoryName }}</span>
+                    <button @click.stop="editingCategoryId = cat.categoryId; editingCategoryName = cat.categoryName"
+                      style="padding:2px 8px; font-size:11px; background:transparent; color:#a1a1aa; border:1px solid #3f3f46; border-radius:4px; cursor:pointer; flex-shrink:0; margin-left:8px;"
+                      @mouseover="$event.target.style.cssText='padding:2px 8px;font-size:11px;background:#3f3f46;color:#fafafa;border:1px solid #52525b;border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:8px;'"
+                      @mouseout="$event.target.style.cssText='padding:2px 8px;font-size:11px;background:transparent;color:#a1a1aa;border:1px solid #3f3f46;border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:8px;'"
+                    >수정</button>
+                  </div>
+                  <!-- 수정 중인 행 -->
+                  <div v-else style="display:flex; gap:4px; align-items:center; padding:8px 12px; background:#18181b;">
+                    <input v-model="editingCategoryName" type="text"
+                      style="flex:1; height:34px; padding:0 8px; background:#27272a; border:1px solid #ea580c; border-radius:6px; color:#fafafa; font-size:13px;"
+                      @keyup.enter="updateCategory(cat.categoryId)"
+                      @keyup.esc="editingCategoryId = null" />
+                    <button @click.stop="updateCategory(cat.categoryId)"
+                      style="height:34px; padding:0 10px; background:#ea580c; color:white; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;">저장</button>
+                    <button @click.stop="deleteCategory(cat.categoryId)"
+                      style="height:34px; padding:0 10px; background:transparent; color:#ef4444; border:1px solid #ef4444; border-radius:6px; font-size:12px; cursor:pointer; white-space:nowrap;">삭제</button>
+                    <button @click.stop="editingCategoryId = null"
+                      style="height:34px; padding:0 8px; background:transparent; color:#a1a1aa; border:1px solid #3f3f46; border-radius:6px; font-size:12px; cursor:pointer;">✕</button>
+                  </div>
+                </div>
+                <div v-if="categories.length === 0" style="padding:12px; text-align:center; color:#a1a1aa; font-size:13px;">카테고리가 없습니다</div>
+                <div style="padding:10px 12px; cursor:pointer; color:#ea580c; font-size:14px; font-weight:700; border-top:1px solid #3f3f46;"
+                  @click="showRegisterCategoryDropdown = false; showNewCategoryInput = true"
+                  @mouseover="$event.currentTarget.style.background='#3f3f46'"
+                  @mouseout="$event.currentTarget.style.background=''">+ 새 카테고리 추가</div>
+              </div>
+            </div>
+            <div v-if="showNewCategoryInput" style="display:flex; gap:6px; margin-top:8px; align-items:center;">
+              <input v-model="newCategoryName" type="text" class="form-input" placeholder="카테고리 이름 입력" style="flex:1; height:42px; box-sizing:border-box;" />
+              <button style="height:42px; padding:0 14px; background:#ea580c; color:white; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap; flex-shrink:0;" @click="addNewCategory('register')">추가</button>
+              <button style="height:42px; padding:0 14px; background:#27272a; color:#fafafa; border:1px solid #3f3f46; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap; flex-shrink:0;" @click="showNewCategoryInput = false; newMenu.categoryId = null">취소</button>
+            </div>
           </div>
           <div class="form-group">
-            <label class="form-label">메뉴 이름</label>
+            <label class="form-label">메뉴 이름 <span style="color:#ef4444; margin-left:2px;">*</span></label>
             <input type="text" v-model="newMenu.name" class="form-input" placeholder="메뉴 이름을 입력하세요" />
           </div>
           <div class="form-group">
-            <label class="form-label">가격 (원)</label>
+            <label class="form-label">가격 (원) <span style="color:#ef4444; margin-left:2px;">*</span></label>
             <input type="number" v-model.number="newMenu.price" class="form-input" placeholder="가격을 입력하세요" />
           </div>
           <div class="form-group">
@@ -122,8 +164,8 @@
               </div>
               <div class="option-items">
                 <div v-for="(detail, dIdx) in option.details" :key="dIdx" class="option-item">
-                  <input type="text" v-model="detail.optionDetailName" class="form-input" placeholder="옵션 상세명" />
-                  <input type="number" v-model.number="detail.optionDetailPrice" class="form-input" placeholder="추가금액" />
+                  <input type="text" v-model="detail.optionDetailName" class="form-input" placeholder="옵션 상세명" style="height:44px; box-sizing:border-box;" />
+                  <input type="number" v-model.number="detail.optionDetailPrice" class="form-input" placeholder="추가금액" style="height:44px; box-sizing:border-box;" />
                   <button class="remove-option-btn" style="display:flex; align-items:center; justify-content:center; line-height:1;" @click="option.details.splice(dIdx, 1)">×</button>
                 </div>
               </div>
@@ -143,11 +185,14 @@
     <div v-if="activeModal === 'menuEdit'" class="modal-overlay" @click.self="activeModal = null">
       <div class="modal-content large">
         <div class="modal-header">
-          <div class="modal-title">메뉴 수정</div>
+          <div class="modal-title">메뉴 선택</div>
           <button class="close-btn" @click="activeModal = null">×</button>
         </div>
         <div class="modal-body">
           <div class="menu-list">
+            <div v-if="menuList.length === 0" style="text-align:center; color:#a1a1aa; padding:40px 0;">
+              등록된 메뉴가 없습니다.
+            </div>
             <div v-for="menu in menuList" :key="menu.menuId" class="menu-item" @click="openMenuDetail(menu)">
               <img :src="menu.imageUrl || 'https://via.placeholder.com/100'" class="menu-image" />
               <div class="menu-info">
@@ -169,21 +214,63 @@
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label">메뉴 이름</label>
+            <label class="form-label">메뉴 이름 <span style="color:#ef4444; margin-left:2px;">*</span></label>
             <input type="text" v-model="editMenu.menuName" class="form-input" />
           </div>
           <div class="form-group">
-            <label class="form-label">가격 (원)</label>
+            <label class="form-label">가격 (원) <span style="color:#ef4444; margin-left:2px;">*</span></label>
             <input type="number" v-model.number="editMenu.price" class="form-input" />
           </div>
           <div class="form-group">
-            <label class="form-label">카테고리</label>
-            <select v-model="editMenu.categoryId" class="form-select">
-              <option :value="null" disabled>선택하세요</option>
-              <option v-for="cat in categories" :key="cat.categoryId" :value="cat.categoryId">
-                {{ cat.categoryName }}
-              </option>
-            </select>
+            <label class="form-label">카테고리 <span style="color:#ef4444; margin-left:2px;">*</span></label>
+            <div style="position:relative;">
+              <div class="form-select" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;" @click="showEditCategoryDropdown = !showEditCategoryDropdown">
+                <span :style="editMenu.categoryId ? 'color:#fafafa' : 'color:#a1a1aa'">
+                  {{ editMenu.categoryId ? (categories.find(c => c.categoryId === editMenu.categoryId) || {}).categoryName : '선택하세요' }}
+                </span>
+                <span style="font-size:11px; color:#a1a1aa;">{{ showEditCategoryDropdown ? '▲' : '▼' }}</span>
+              </div>
+              <div v-if="showEditCategoryDropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; background:#27272a; border:1px solid #3f3f46; border-radius:8px; z-index:100; overflow:hidden;">
+                <div v-for="cat in categories" :key="cat.categoryId"
+                  style="border-bottom:1px solid #3f3f46;">
+                  <!-- 일반 행 -->
+                  <div v-if="editingCategoryId !== cat.categoryId"
+                    style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px;"
+                    :style="{ background: editMenu.categoryId === cat.categoryId ? '#3f3f46' : '' }">
+                    <span style="font-size:14px; color:#fafafa; flex:1; cursor:pointer;"
+                      @click="editMenu.categoryId = cat.categoryId; showEditCategoryDropdown = false">{{ cat.categoryName }}</span>
+                    <button @click.stop="editingCategoryId = cat.categoryId; editingCategoryName = cat.categoryName"
+                      style="padding:2px 8px; font-size:11px; background:transparent; color:#a1a1aa; border:1px solid #3f3f46; border-radius:4px; cursor:pointer; flex-shrink:0; margin-left:8px;"
+                      @mouseover="$event.target.style.cssText='padding:2px 8px;font-size:11px;background:#3f3f46;color:#fafafa;border:1px solid #52525b;border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:8px;'"
+                      @mouseout="$event.target.style.cssText='padding:2px 8px;font-size:11px;background:transparent;color:#a1a1aa;border:1px solid #3f3f46;border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:8px;'"
+                    >수정</button>
+                  </div>
+                  <!-- 수정 중인 행 -->
+                  <div v-else style="display:flex; gap:4px; align-items:center; padding:8px 12px; background:#18181b;">
+                    <input v-model="editingCategoryName" type="text"
+                      style="flex:1; height:34px; padding:0 8px; background:#27272a; border:1px solid #ea580c; border-radius:6px; color:#fafafa; font-size:13px;"
+                      @keyup.enter="updateCategory(cat.categoryId)"
+                      @keyup.esc="editingCategoryId = null" />
+                    <button @click.stop="updateCategory(cat.categoryId)"
+                      style="height:34px; padding:0 10px; background:#ea580c; color:white; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;">저장</button>
+                    <button @click.stop="deleteCategory(cat.categoryId)"
+                      style="height:34px; padding:0 10px; background:transparent; color:#ef4444; border:1px solid #ef4444; border-radius:6px; font-size:12px; cursor:pointer; white-space:nowrap;">삭제</button>
+                    <button @click.stop="editingCategoryId = null"
+                      style="height:34px; padding:0 8px; background:transparent; color:#a1a1aa; border:1px solid #3f3f46; border-radius:6px; font-size:12px; cursor:pointer;">✕</button>
+                  </div>
+                </div>
+                <div v-if="categories.length === 0" style="padding:12px; text-align:center; color:#a1a1aa; font-size:13px;">카테고리가 없습니다</div>
+                <div style="padding:10px 12px; cursor:pointer; color:#ea580c; font-size:14px; font-weight:700; border-top:1px solid #3f3f46;"
+                  @click="showEditCategoryDropdown = false; showEditCategoryInput = true"
+                  @mouseover="$event.currentTarget.style.background='#3f3f46'"
+                  @mouseout="$event.currentTarget.style.background=''">+ 새 카테고리 추가</div>
+              </div>
+            </div>
+            <div v-if="showEditCategoryInput" style="display:flex; gap:6px; margin-top:8px; align-items:center;">
+              <input v-model="newCategoryName" type="text" class="form-input" placeholder="카테고리 이름 입력" style="flex:1; height:42px; box-sizing:border-box;" />
+              <button style="height:42px; padding:0 14px; background:#ea580c; color:white; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap; flex-shrink:0;" @click="addNewCategory('edit')">추가</button>
+              <button style="height:42px; padding:0 14px; background:#27272a; color:#fafafa; border:1px solid #3f3f46; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap; flex-shrink:0;" @click="showEditCategoryInput = false; editMenu.categoryId = null">취소</button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">원산지</label>
@@ -198,30 +285,24 @@
             <input type="file" accept="image/*" @change="(e) => { editMenu.imageFile = e.target.files[0] }" class="form-input" />
           </div>
 
-          <!-- 옵션 아코디언 -->
+          <!-- 옵션 -->
           <div class="form-group">
             <label class="form-label">옵션</label>
             <div v-for="option in editMenu.options" :key="option.optionId" class="option-group">
-              <div class="accordion-header option-header" @click="toggleOption(option.optionId)">
-                <span class="option-title">{{ option.optionName || '(옵션명 없음)' }}</span>
-                <span class="accordion-arrow">{{ expandedOptions.includes(option.optionId) ? '▲' : '▼' }}</span>
-                <button class="remove-option-btn" @click.stop="deleteOption(option.optionId)">삭제</button>
+              <div class="option-header">
+                <input type="text" v-model="option.optionName" class="form-input" placeholder="옵션 그룹명" style="height:44px; box-sizing:border-box;" />
+                <button style="height:36px; width:36px; background:#52525b; color:white; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;" @click="updateOption(option)">저장</button>
+                <button class="remove-option-btn" style="height:36px; width:36px;" @click="deleteOption(option.optionId)">삭제</button>
               </div>
-              <div v-if="expandedOptions.includes(option.optionId)" class="accordion-body">
-                <div class="option-name-edit">
-                  <input type="text" v-model="option.optionName" class="form-input" placeholder="옵션명" />
-                  <button class="btn btn-secondary" style="min-width:60px; white-space:nowrap;" @click="updateOption(option)">수정</button>
+              <div class="option-items">
+                <div v-for="detail in option.details" :key="detail.optionDetailId" class="option-item">
+                  <input type="text" v-model="detail.optionDetailName" class="form-input" placeholder="옵션 상세명" style="height:44px; box-sizing:border-box;" />
+                  <input type="number" v-model.number="detail.optionDetailPrice" class="form-input" placeholder="추가금액" style="height:44px; box-sizing:border-box;" />
+                  <button style="height:36px; width:36px; background:#52525b; color:white; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;" @click="updateOptionDetail(detail)">저장</button>
+                  <button class="remove-option-btn" style="height:36px; width:36px; display:flex; align-items:center; justify-content:center; line-height:1;" @click="deleteOptionDetail(detail.optionDetailId, option.optionId)">×</button>
                 </div>
-                <div class="option-items">
-                  <div v-for="detail in option.details" :key="detail.optionDetailId" class="option-item">
-                    <input type="text" v-model="detail.optionDetailName" class="form-input" placeholder="옵션 상세명" />
-                    <input type="number" v-model.number="detail.optionDetailPrice" class="form-input" placeholder="추가금액" />
-                    <button class="btn btn-secondary" style="min-width:60px; white-space:nowrap;" @click="updateOptionDetail(detail)">수정</button>
-                    <button class="remove-option-btn" style="display:flex; align-items:center; justify-content:center; line-height:1;" @click="deleteOptionDetail(detail.optionDetailId, option.optionId)">×</button>
-                  </div>
-                </div>
-                <button class="add-option-detail-btn" @click="addOptionDetail(option)">+ 옵션 상세 추가</button>
               </div>
+              <button class="add-option-detail-btn" @click="addOptionDetail(option)">+ 옵션 상세 추가</button>
             </div>
             <button class="add-option-btn" @click="addOption">+ 옵션 추가</button>
           </div>
@@ -357,6 +438,15 @@ const newMenu = reactive({
 const editMenu = ref(null)
 const expandedOptions = ref([])
 
+// ── 카테고리 인라인 추가 ──
+const showNewCategoryInput = ref(false)
+const showRegisterCategoryDropdown = ref(false)
+const showEditCategoryDropdown = ref(false)
+const editingCategoryId = ref(null)
+const editingCategoryName = ref('')
+const showEditCategoryInput = ref(false)
+const newCategoryName = ref('')
+
 // ── 영업시간 ──
 const businessHours = reactive({ open: '10:00', close: '22:00' })
 
@@ -365,8 +455,8 @@ const ownerInfo = reactive({ name: '', email: '', phone: '', businessNumber: '' 
 const editingPassword = ref(false)
 const oldPassword = ref('')
 const newPassword = ref('')
-const showOldPassword = ref(false)  // ✅ 추가
-const showNewPassword = ref(false)  // ✅ 추가
+const showOldPassword = ref(false)
+const showNewPassword = ref(false)
 
 // ── 초기 로딩 ──
 onMounted(async () => {
@@ -387,7 +477,8 @@ const loadTables = async () => {
 const loadMenus = async () => {
   try {
     const res = await api.get('/view/all')
-    menuList.value = res.data
+    console.log('menuList 로딩 결과:', res.data)
+    menuList.value = Array.isArray(res.data) ? res.data : []
   } catch (e) {
     console.error('메뉴 목록 로딩 실패:', e)
   }
@@ -503,6 +594,8 @@ const registerMenu = async () => {
       imageFile: null, imagePreview: null, categoryId: null,
       name: '', price: 0, origin: '', description: '', options: [],
     })
+    showNewCategoryInput.value = false
+    newCategoryName.value = ''
     activeModal.value = null
     await loadMenus()
   } catch (e) {
@@ -510,40 +603,112 @@ const registerMenu = async () => {
   }
 }
 
+// ── 카테고리 인라인 추가 ──
+const addNewCategory = async (mode) => {
+  if (!newCategoryName.value.trim()) {
+    alert('카테고리 이름을 입력하세요.')
+    return
+  }
+  try {
+    // 백엔드가 새 카테고리 ID를 직접 반환함 (CategoryService.createCategory → return category.getId())
+    await api.post('/store/category/create', { categoryName: newCategoryName.value.trim() })
+
+    // 카테고리 목록 갱신
+    await loadCategories()
+
+    // 반환된 ID로 바로 자동 선택 (이름 검색보다 확실함)
+    if (mode === 'register') {
+      newMenu.categoryId = null
+      showNewCategoryInput.value = false
+    } else {
+      editMenu.value.categoryId = null
+      showEditCategoryInput.value = false
+    }
+    newCategoryName.value = ''
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '카테고리 추가 실패')
+  }
+}
+
+// ── 카테고리 수정 ──
+const updateCategory = async (categoryId) => {
+  if (!editingCategoryName.value.trim()) {
+    alert('카테고리 이름을 입력하세요.')
+    return
+  }
+  try {
+    await api.put(`/store/category/${categoryId}`, { categoryName: editingCategoryName.value.trim() })
+    await loadCategories()
+    editingCategoryId.value = null
+    editingCategoryName.value = ''
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '카테고리 수정 실패')
+  }
+}
+
+// ── 카테고리 삭제 ──
+const deleteCategory = async (categoryId) => {
+  if (!confirm('이 카테고리를 삭제하시겠습니까?\n해당 카테고리의 메뉴들은 카테고리가 없어집니다.')) return
+  try {
+    await api.delete(`/store/category/${categoryId}`)
+    await loadCategories()
+    // 현재 선택된 카테고리가 삭제된 경우 리셋
+    if (newMenu.categoryId === categoryId) newMenu.categoryId = null
+    if (editMenu.value && editMenu.value.categoryId === categoryId) editMenu.value.categoryId = null
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '카테고리 삭제 실패')
+  }
+}
+
 // ── 메뉴 수정 열기 ──
 const openMenuDetail = async (menu) => {
+  console.log('openMenuDetail 호출됨, menu:', menu)
+  const menuId = menu.menuId ?? menu.id
+  if (!menuId) {
+    alert('메뉴 ID를 찾을 수 없습니다.')
+    return
+  }
   expandedOptions.value = []
+  showEditCategoryInput.value = false
+  newCategoryName.value = ''
+  // 기본값으로 모달을 먼저 열기
+  editMenu.value = {
+    id: menuId,
+    menuName: menu.menuName || '',
+    price: menu.menuPrice || 0,
+    categoryId: null,
+    origin: '',
+    explanation: '',
+    imageFile: null,
+    options: [],
+  }
+  activeModal.value = 'menuDetail'
+  // API로 상세 데이터 채우기
   try {
-    const res = await api.get(`/store/menu/${menu.menuId}/detail`)
+    const res = await api.get(`/store/menu/${menuId}/detail`)
+    console.log('메뉴 상세 API 응답:', res.data)
     editMenu.value = {
-      id: menu.menuId,
-      menuName: res.data.menuName,
-      price: res.data.price,
-      categoryId: res.data.categoryId,
+      id: menuId,
+      menuName: res.data.menuName || '',
+      price: res.data.price || 0,
+      categoryId: res.data.categoryId ?? null,
       origin: res.data.origin || '',
       explanation: res.data.explanation || '',
+      imageFile: null,
       options: (res.data.options || []).map(o => ({
         optionId: o.optionId,
-        optionName: o.optionName,
+        optionName: o.optionName || '',
         details: (o.details || []).map(d => ({
           optionDetailId: d.optionDetailId,
-          optionDetailName: d.optionDetailName,
-          optionDetailPrice: d.optionDetailPrice,
+          optionDetailName: d.optionDetailName || '',
+          optionDetailPrice: d.optionDetailPrice || 0,
         })),
       })),
     }
   } catch (e) {
-    editMenu.value = {
-      id: menu.menuId,
-      menuName: menu.menuName,
-      price: menu.menuPrice,
-      categoryId: null,
-      origin: '',
-      explanation: '',
-      options: [],
-    }
+    console.error('메뉴 상세 로딩 실패:', e)
+    alert('메뉴 정보 로딩 실패: ' + (e.response?.data?.errorMessage || e.message))
   }
-  activeModal.value = 'menuDetail'
 }
 
 // ── 메뉴 정보 저장 ──
@@ -579,13 +744,6 @@ const deleteMenu = async () => {
   } catch (e) {
     alert(e.response?.data?.errorMessage || '메뉴 삭제 실패')
   }
-}
-
-// ── 옵션 아코디언 토글 ──
-const toggleOption = (optionId) => {
-  const idx = expandedOptions.value.indexOf(optionId)
-  if (idx === -1) expandedOptions.value.push(optionId)
-  else expandedOptions.value.splice(idx, 1)
 }
 
 // ── 옵션 추가 ──
@@ -695,8 +853,8 @@ const cancelPasswordEdit = () => {
   editingPassword.value = false
   oldPassword.value = ''
   newPassword.value = ''
-  showOldPassword.value = false  // ✅ 추가
-  showNewPassword.value = false  // ✅ 추가
+  showOldPassword.value = false
+  showNewPassword.value = false
 }
 
 const logout = () => {
@@ -708,4 +866,13 @@ const logout = () => {
 
 <style scoped>
 @import "@/assets/css/OwnerSettings.css";
+
+/* 카테고리 추가 인라인 버튼 */
+.btn-cat {
+  padding: 0 14px !important;
+  height: 42px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 </style>

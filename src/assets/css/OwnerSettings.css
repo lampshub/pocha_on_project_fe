@@ -1,4 +1,3 @@
-
 .settings-page { display: flex; flex-direction: column; height: 100vh; background: #0a0a0a; color: #fafafa; font-family: 'Noto Sans KR', sans-serif; }
 
 .header { padding: 16px 24px; background: #18181b; border-bottom: 1px solid #3f3f46; display: flex; justify-content: space-between; align-items: center; height: 70px; }
@@ -38,6 +37,9 @@
 .btn-secondary:hover { background: #3f3f46; }
 .btn-danger { background: #ef4444; color: white; }
 .btn-danger:hover { background: #dc2626; }
+
+/* 카테고리 인라인 추가 버튼 - padding을 작게 고정 */
+.btn-cat { padding: 0 14px; height: 42px; box-sizing: border-box; flex-shrink: 0; white-space: nowrap; }
 
 /* 테이블 관리 */
 .table-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-bottom: 20px; }
