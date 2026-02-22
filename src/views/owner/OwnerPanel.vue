@@ -39,7 +39,7 @@
             <div class="empty-icon">🍽️</div>
             <div class="empty-title">등록된 테이블이 없습니다</div>
             <div class="empty-description">설정 관리에서 테이블을 추가해주세요</div>
-            <router-link to="/owner/settings" class="add-table-btn">테이블 추가하기</router-link>
+            <router-link to="/owner/settings?modal=table" class="add-table-btn">테이블 추가하기</router-link>
           </div>
         </div>
 
@@ -57,10 +57,6 @@
               <div class="order-menu-name">{{ order.menu }}</div>
               <div class="order-detail">{{ order.option || '옵션 없음' }} · {{ order.quantity }}개</div>
               <button class="complete-order-btn" @click="completeOrder(order)">완료</button>
-            </div>
-            <div v-if="realtimeOrders.length === 0" class="empty-state">
-              <div class="empty-icon">🍽️</div>
-              <div>새로운 주문이 없습니다</div>
             </div>
           </div>
         </div>
@@ -207,6 +203,7 @@ const handleNewOrder = (orderDto) => {
 };
 
 onMounted(async () => {
+  storeInfo.loadFromStorage()
   // storeInfo 로드
   if (!storeInfo.storeName) {
     storeInfo.loadFromStorage()

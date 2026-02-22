@@ -404,10 +404,11 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import api from '@/api/axios.js'
 
 const router = useRouter()
+const route = useRoute()
 const storeName = ref(localStorage.getItem('currentStoreName') || '매장')
 const activeModal = ref(null)
 
@@ -479,6 +480,9 @@ const showNewPassword = ref(false)
 // ── 초기 로딩 ──
 onMounted(async () => {
   await Promise.all([loadTables(), loadMenus(), loadCategories(), loadMyPage()])
+  if (route.query.modal === 'table') {
+    activeModal.value = 'table'
+  }
 })
 
 const loadTables = async () => {
