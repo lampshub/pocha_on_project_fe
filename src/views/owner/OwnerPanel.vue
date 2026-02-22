@@ -1,7 +1,7 @@
 <template>
   <div class="owner-dashboard">
     <div class="header">
-      <div class="store-name">{{ storeName }}</div>
+      <div class="store-name">{{ storeInfo.storeName }}</div>
       <div class="header-btns">
         <router-link to="/owner/settlement" class="nav-btn-header">📊 매출 정산</router-link>
         <router-link to="/owner/settings" class="nav-btn-header">⚙️ 설정 관리</router-link>
@@ -11,19 +11,35 @@
     <div class="main-layout">
       <div class="center-content">
         <div class="table-status-area">
-          <div class="table-grid">
+          <!--          테이블ㄹ 있을 때-->
+          <div v-if="tables.length > 0" class="table-grid">
             <div
                 v-for="table in tables"
                 :key="table.number"
                 class="table-card"
                 :class="{ 'has-call': table.hasCall }"
-                @click="openTableDetail(table)"
-            >
+                @click="openTableDetail(table)">
               <div v-if="table.hasCall" class="call-badge">호출</div>
               <div class="table-number">{{ table.number }}번 테이블</div>
-              <div class="table-orders">{{ getOrderSummary(table) || '주문 없음' }}</div>
+              <div class="table-orders">
+                <div v-if="table.detailOrders.length === 0">주문 없음</div>
+                <div v-for="order in table.detailOrders.slice(0, 5)" :key="order.id" class="table-order-line">
+                  {{ order.menu }} × {{ order.quantity }}
+                  <span v-if="order.option" class="table-order-option">{{ order.option }}</span>
+                </div>
+                <div v-if="table.detailOrders.length > 5" class="table-order-more">
+                  +{{ table.detailOrders.length - 5 }}건 더보기
+                </div>
+              </div>
               <div v-if="table.total > 0" class="table-total">{{ formatPrice(table.total) }}원</div>
             </div>
+          </div>
+          <!--          테이블 없을 때-->
+          <div v-else class="empty-table-state">
+            <div class="empty-icon">🍽️</div>
+            <div class="empty-title">등록된 테이블이 없습니다</div>
+            <div class="empty-description">설정 관리에서 테이블을 추가해주세요</div>
+            <router-link to="/owner/settings" class="add-table-btn">테이블 추가하기</router-link>
           </div>
         </div>
 
@@ -40,7 +56,7 @@
               </div>
               <div class="order-menu-name">{{ order.menu }}</div>
               <div class="order-detail">{{ order.option || '옵션 없음' }} · {{ order.quantity }}개</div>
-              <button class="complete-order-btn" @click="completeOrder(order.id)">완료</button>
+              <button class="complete-order-btn" @click="completeOrder(order)">완료</button>
             </div>
             <div v-if="realtimeOrders.length === 0" class="empty-state">
               <div class="empty-icon">🍽️</div>
@@ -83,38 +99,162 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import {ref, onMounted, onUnmounted} from "vue";
+import {Client} from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import {useToast} from 'vue-toastification'
+import {useStoreInfo} from "@/store/storeInfo";
+import axios from "axios";
 
-const storeName = ref('강남 본점')
-const showTableDetail = ref(false)
-const selectedTable = ref(null)
+const toast = useToast();
+const realtimeOrders = ref([]);
+const storeInfo = useStoreInfo();
+const tables = ref([]);
+const showTableDetail = ref(false);
+const selectedTable = ref(null);
 
-const tables = ref([
-  { number: 1, total: 36000, hasCall: false, orders: ['불고기 1'], detailOrders: [{ id: 1, menu: '불고기', option: '매운맛', quantity: 2, price: 18000 }] },
-  { number: 2, total: 9000, hasCall: true, orders: ['김치찌개 1'], detailOrders: [{ id: 2, menu: '김치찌개', option: null, quantity: 1, price: 9000 }] },
-  { number: 3, total: 0, hasCall: false, orders: [], detailOrders: [] },
-  { number: 4, total: 20000, hasCall: false, orders: ['된장찌개 1', '콜라 1'], detailOrders: [{ id: 3, menu: '된장찌개', option: null, quantity: 2, price: 8000 }, { id: 4, menu: '콜라', option: '제로', quantity: 2, price: 2000 }] },
-  { number: 5, total: 0, hasCall: false, orders: [], detailOrders: [] },
-  { number: 6, total: 12000, hasCall: false, orders: ['김치전 1'], detailOrders: [{ id: 5, menu: '김치전', option: null, quantity: 1, price: 12000 }] },
-])
+// 토큰/storeId
+const accessToken = ref(localStorage.getItem("accessToken"));
+const storeId = ref(localStorage.getItem("ownerStoreId"));
 
-const realtimeOrders = ref([
-  { id: 1, tableNumber: 3, menu: '불고기', option: '보통맛', quantity: 1, time: '14:23', price: 18000 },
-  { id: 2, tableNumber: 5, menu: '소주', option: null, quantity: 2, time: '14:25', price: 5000 },
-])
+let stompClient = null;
 
-const formatPrice = (price) => (price ?? 0).toLocaleString('ko-KR')
+// JWT에서 storeId 파싱
+const parseStoreIdFromToken = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.storeId;
+  } catch {
+    return null;
+  }
+};
 
-const getOrderSummary = (table) => {
-  if (!table.orders?.length) return ''
-  return table.orders.join(', ')
-}
+// 웹소켓 연결
+const connectWebSocket = () => {
+  if (!accessToken.value || !storeId.value) return;
+
+  stompClient = new Client({
+    webSocketFactory: () => new SockJS("http://localhost:8083/connect"),
+    connectHeaders: {Authorization: `Bearer ${accessToken.value}`},
+    onConnect: () => {
+      console.log("웹소켓 연결됨");
+      stompClient.subscribe(`/topic/order/${storeId.value}`, (message) => {
+        const orderDto = JSON.parse(message.body);
+        handleNewOrder(orderDto);
+      });
+    },
+    onStompError: (frame) => console.error("STOMP 에러:", frame),
+  });
+  stompClient.activate();
+};
+
+// 새 주문 처리
+const handleNewOrder = (orderDto) => {
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+  // ★ 실시간 주문 카드 (메뉴별 개별 카드) — 기존 unshift 블록 삭제하고 이걸로 교체
+  orderDto.webMenuList?.forEach((menu) => {
+    const optionStr = menu.optionList
+        ?.map(opt => `${opt.optionGroupName}: ${opt.optionDetailList?.map(d => d.optionDetailName).join(', ')}`)
+        .join(' / ') || null
+
+    realtimeOrders.value.push({
+      id: Date.now() + Math.random(),
+      tableNumber: orderDto.tableNumber,
+      time,
+      menu: menu.menuName,
+      option: optionStr,
+      quantity: menu.quantity,
+      price: menu.menuPrice ?? 0,
+      status: '주문접수',
+      orderingId: orderDto.orderingId,
+    })
+  });
+
+  // ★ 테이블 카드 업데이트 — 기존 코드 그대로
+  let table = tables.value.find((t) => t.number === orderDto.tableNumber);
+  if (!table) {
+    table = {number: orderDto.tableNumber, total: 0, hasCall: false, orders: [], detailOrders: []};
+    tables.value.push(table);
+    tables.value.sort((a, b) => a.number - b.number);
+  }
+
+  orderDto.webMenuList?.forEach((menu) => {
+    const optionStr =
+        menu.optionList
+            ?.map(
+                (opt) =>
+                    `${opt.optionGroupName}: ${opt.optionDetailList
+                        ?.map((d) => d.optionDetailName)
+                        .join(" / ")}`,
+            )
+            .join(" / ") || null;
+    const optionPrice =
+        menu.optionList
+            ?.flatMap((opt) => opt.optionDetailList ?? [])
+            .reduce((sum, d) => sum + (d.optionDetailPrice ?? 0), 0) ?? 0;
+
+    table.detailOrders.push({
+      id: Date.now(),
+      menu: menu.menuName,
+      option: optionStr,
+      quantity: menu.quantity,
+      price: (menu.menuPrice ?? 0) + optionPrice,
+    });
+    table.total += ((menu.menuPrice ?? 0) + optionPrice) * menu.quantity;
+  });
+};
+
+onMounted(async () => {
+  // storeInfo 로드
+  if (!storeInfo.storeName) {
+    storeInfo.loadFromStorage()
+  }
+
+  // storeId 토큰에서 파싱
+  const token = localStorage.getItem('accessToken')
+  if (token && !storeId.value) {
+    const parsed = parseStoreIdFromToken(token);
+    if (parsed) {
+      storeId.value = String(parsed);
+      localStorage.setItem("ownerStoreId", storeId.value);
+    }
+  }
+
+  // 테이블 목록 로드
+  try {
+    const res = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/customertable/list`, {
+      headers: {Authorization: `Bearer ${token}`}
+    })
+    tables.value = res.data.map(t => ({
+      number: t.tableNum,
+      tableId: t.customerTableId,
+      status: t.tableStatus,
+      total: 0,
+      hasCall: false,
+      orders: [],
+      detailOrders: []
+    }))
+  } catch (e) {
+    toast.error(e.response?.data?.errorMessage || "테이블 불러오기 실패")
+  }
+
+  // 웹소켓 연결
+  connectWebSocket();
+});
+onUnmounted(() => {
+  stompClient?.deactivate();
+});
+
+const formatPrice = (price) => (price ?? 0).toLocaleString("ko-KR");
 
 const openTableDetail = (table) => {
-  selectedTable.value = table
-  showTableDetail.value = true
-  if (table.hasCall) table.hasCall = false
-}
+  selectedTable.value = table;
+  showTableDetail.value = true;
+  if (table.hasCall) table.hasCall = false;
+};
+
 
 const processPayment = () => {
   if (!selectedTable.value) return
@@ -124,86 +264,19 @@ const processPayment = () => {
     selectedTable.value.total = 0
     showTableDetail.value = false
   }
-}
-
-const completeOrder = (id) => {
-  const order = realtimeOrders.value.find(o => o.id === id)
-  if (!order) return
-  realtimeOrders.value = realtimeOrders.value.filter(o => o.id !== id)
-  const table = tables.value.find(t => t.number === order.tableNumber)
-  if (table) {
-    table.detailOrders.push({ id: Date.now(), menu: order.menu, option: order.option, quantity: order.quantity, price: order.price })
-    table.orders.push(`${order.menu} ${order.quantity}`)
-    table.total += order.price * order.quantity
+};
+const completeOrder = async (order) => {
+  try {
+    await axios.post(
+        `${process.env.VUE_APP_API_BASE_URL}/ordering/${order.orderingId}/done`
+    )
+    realtimeOrders.value = realtimeOrders.value.filter(o => o.id !== order.id);
+  } catch (e) {
+    toast.error(e.response?.data?.errorMessage || "주문완료 처리 실패");
   }
 }
 </script>
 
 <style scoped>
-.owner-dashboard { display: flex; flex-direction: column; height: 100vh; background: var(--bg-dark); color: var(--text); font-family: 'Noto Sans KR', sans-serif; }
-
-.header { padding: 16px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; height: 70px; }
-.store-name { font-size: 26px; font-weight: 900; color: var(--primary); }
-.header-btns { display: flex; gap: 12px; }
-.nav-btn-header { padding: 8px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: white; cursor: pointer; font-weight: 700; font-size: 14px; transition: all 0.2s; text-decoration: none; }
-.nav-btn-header:hover { border-color: var(--primary); background: var(--card-hover); }
-
-.main-layout { flex: 1; display: flex; overflow: hidden; }
-.center-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-.table-status-area { flex: 1; padding: 20px; overflow-y: auto; }
-.table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
-
-.table-card { background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 16px; cursor: pointer; transition: all 0.3s; position: relative; min-height: 140px; }
-.table-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 6px 20px rgba(234,88,12,0.2); }
-.table-card.has-call { border-color: var(--danger); animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.7)} 50%{box-shadow:0 0 0 10px rgba(239,68,68,0)} }
-
-.call-badge { position: absolute; top: 10px; right: 10px; background: var(--danger); color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; animation: blink 1s infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-.table-number { font-size: 22px; font-weight: 900; color: var(--primary); margin-bottom: 10px; }
-.table-orders { font-size: 11px; color: var(--text-secondary); }
-.table-total { font-size: 16px; font-weight: 900; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
-
-.realtime-orders-bottom { height: 220px; background: var(--bg-secondary); border-top: 1px solid var(--border); display: flex; flex-direction: column; }
-.orders-bottom-header { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.orders-title { font-size: 16px; font-weight: 900; }
-.orders-count { font-size: 12px; color: var(--text-secondary); }
-.orders-horizontal-scroll { flex: 1; display: flex; gap: 12px; padding: 16px 20px; overflow-x: auto; }
-
-.order-item-compact { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; min-width: 200px; flex-shrink: 0; }
-.order-item-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-.order-table-num { color: var(--primary); font-weight: 900; font-size: 14px; }
-.order-time { font-size: 11px; color: var(--text-secondary); }
-.order-menu-name { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
-.order-detail { font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; }
-
-.complete-order-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 8px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; }
-.complete-order-btn:hover { background: var(--primary-dark); }
-
-.empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); width: 100%; }
-.empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
-
-/* 모달 */
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: var(--bg-secondary); border-radius: 20px; border: 1px solid var(--border); width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s; }
-@keyframes slideUp { from{transform:translateY(50px);opacity:0} to{transform:translateY(0);opacity:1} }
-.modal-header { padding: 24px 24px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.modal-title { font-size: 22px; font-weight: 900; }
-.close-btn { background: none; border: none; color: var(--text-secondary); font-size: 28px; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
-.close-btn:hover { background: var(--card); color: var(--text); }
-.modal-body { padding: 24px; }
-.modal-footer { padding: 16px 24px 24px; display: flex; gap: 12px; justify-content: flex-end; align-items: center; }
-.total-amount { font-size: 18px; font-weight: 900; margin-right: auto; }
-
-.btn { padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; }
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { background: var(--primary-dark); }
-
-.history-item-card { background: var(--bg-dark); padding: 14px; border-radius: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.history-info { flex: 1; }
-.history-menu { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
-.history-detail { font-size: 11px; color: var(--text-secondary); }
-.history-price { font-size: 14px; font-weight: 700; }
+@import "@/assets/css/OwnerPanel.css";
 </style>

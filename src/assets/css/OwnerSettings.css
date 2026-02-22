@@ -19,15 +19,15 @@
 
 /* 모달 */
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: #18181b; border-radius: 20px; border: 1px solid #3f3f46; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s; }
-.modal-content.large { max-width: 900px; }
+.modal-content { background: #18181b; border-radius: 20px; border: 1px solid #3f3f46; width: 90%; max-width:600px  !important;  max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s; }
+.modal-content.large { max-width: 750px  !important; }
 @keyframes slideUp { from{transform:translateY(50px);opacity:0} to{transform:translateY(0);opacity:1} }
-.modal-header { padding: 24px 24px 16px; border-bottom: 1px solid #3f3f46; display: flex; justify-content: space-between; align-items: center; }
+.modal-header { padding: 12px 24px 12px; border-bottom: 1px solid #3f3f46; display: flex; justify-content: space-between; align-items: center; }
 .modal-title { font-size: 22px; font-weight: 900; }
 .close-btn { background: none; border: none; color: #a1a1aa; font-size: 28px; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
 .close-btn:hover { background: #27272a; color: #fafafa; }
 .modal-body { padding: 24px; }
-.modal-footer { padding: 16px 24px 24px; display: flex; gap: 12px; justify-content: flex-end; align-items: center; }
+.modal-footer { padding: 12px 24px 12px; display: flex; gap: 12px; justify-content: flex-end; align-items: center; }
 
 /* 버튼 */
 .btn { padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; transition: all 0.2s; }
@@ -48,7 +48,7 @@
 .add-table-input { display: flex; gap: 12px; align-items: center; }
 
 /* 폼 */
-.form-group { margin-bottom: 20px; }
+.form-group { margin-bottom: 12px; }
 .form-label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
 .form-input, .form-select, .form-textarea { width: 100%; padding: 12px; background: #27272a; border: 1px solid #3f3f46; border-radius: 8px; color: #fafafa; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; }
 .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: #ea580c; }
@@ -101,3 +101,49 @@
 .edit-form-actions { display: flex; gap: 8px; margin-top: 12px; }
 .logout-btn { width: 100%; padding: 16px; background: #ef4444; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 900; cursor: pointer; }
 .logout-btn:hover { background: #dc2626; }
+
+
+/* 아코디언 스타일 */
+.accordion-header {
+  cursor: pointer;
+  user-select: none;
+}
+.accordion-header:hover {
+  opacity: 0.85;
+}
+.option-title {
+  flex: 1;
+  font-weight: 700;
+}
+.accordion-arrow {
+  font-size: 12px;
+  color: #a1a1aa;
+  margin-right: 8px;
+}
+.accordion-body {
+  padding: 12px 0 4px 0;
+  border-top: 1px solid #3f3f46;
+  margin-top: 4px;
+}
+.option-name-edit {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.remove-option-btn {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  flex-shrink: 0;
+  align-self: center !important;
+}
+.btn-add-small {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  flex-shrink: 0;
+  width: auto !important;
+}

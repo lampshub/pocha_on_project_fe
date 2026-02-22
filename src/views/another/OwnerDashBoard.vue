@@ -1,5 +1,6 @@
 <template>
   <div class="dashboard-root">
+
     <!-- 환영 헤더 -->
     <div class="welcome-header">
       <div class="welcome-content">
@@ -15,6 +16,7 @@
 
     <!-- 메인 컨테이너 -->
     <div class="main-container">
+
       <!-- 왼쪽: 매출 현황 -->
       <div class="sales-panel">
         <div class="sales-card">
@@ -70,10 +72,10 @@
         <div class="store-grid">
           <!-- 매장 카드 -->
           <div
-            v-for="store in stores"
-            :key="store.id"
-            class="store-card"
-            @click="handleStoreClick(store)"
+              v-for="store in stores"
+              :key="store.id"
+              class="store-card"
+              @click="handleStoreClick(store)"
           >
             <div class="store-header">
               <div class="store-main-info">
@@ -153,7 +155,6 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios"; // 또는 이미 설정된 axios 인스턴스
-
 const router = useRouter();
 
 // ── 상태 ──────────────────────────────────────────────
@@ -216,7 +217,7 @@ const fetchDashboardData = async () => {
         ).reduce((a, b) => a + b, 0);
         return {
     monthly: monthlyTotalForStore,
-    daily: dailyRes.data.dayTotalAmount || 0, // dayTotal -> dayTotalAmount 로 수정
+    daily: dailyRes.data.dayTotal || 0, // dayTotal -> dayTotalAmount 로 수정
     todayOrders: dailyRes.data.orderCount || 0
   };
       });
@@ -290,13 +291,11 @@ const goToCustomerView = async () => {
     const response = await axios.post(`${baseUrl}/store/select`, {
       storeId: selectedStore.value.id
     });
-
     const token = response.data.storeAccessToken;
     if (!token) {
       alert("매장 인증에 실패했습니다.");
       return;
     }
-
     // 2. BASE → STORE 토큰 교체
     localStorage.setItem('accessToken', token);
 
@@ -316,10 +315,9 @@ const goToCustomerView = async () => {
 
 const goToOwnerView = async () => {
   if (!selectedStore.value) return;
-
   try {
     const baseUrl = process.env.VUE_APP_API_BASE_URL;
-    
+
     // 1. 서버에 매장 선택 요청 (현재 BASE 토큰이 Authorization 헤더에 있어야 함)
     const response = await axios.post(`${baseUrl}/store/select`, {
       storeId: selectedStore.value.id
@@ -333,7 +331,11 @@ const goToOwnerView = async () => {
     if (token) {
       // 3. 로컬 스토리지 갱신 (기존 BASE -> STORE 토큰으로 교체)
       localStorage.setItem('accessToken', token);
-      
+
+      localStorage.setItem('currentStoreId', selectedStore.value.id);
+      localStorage.setItem('currentStoreName', selectedStore.value.storeName);
+      localStorage.setItem('currentStoreAddress', selectedStore.value.address);
+
       console.log("토큰 교체 성공! 새 토큰(STORE)으로 이동합니다.");
 
       // 4. 화면 이동
@@ -353,7 +355,5 @@ const goToAddStore = () => {
 </script>
 
 <style scoped>
-
 @import "@/assets/css/OwnerDashBoard.css";
-
 </style>

@@ -85,9 +85,7 @@
             </div>
             <div class="detail-row">
               <span class="detail-label">평균 단가</span>
-              <span class="detail-value">
-                {{ selectDay.orders > 0 ? formatPrice(Math.floor(selectedDay.sales / selectedDay.orders)) : "0" }}원
-              </span>
+              <span class="detail-value">{{ formatPrice(selectedDay.averageOrderAmount) }}원</span>
             </div>
           </div>
         </div>
@@ -115,33 +113,30 @@ const selectedDay = ref(null)
 
 // ── 달력 생성 ─────────────────────────────────────────
 const generateCalendar = () => {
-  const year = currentYear.value
-  const month = currentMonth.value - 1
-  const today = new Date()
+  const year = currentYear.value;
+  const month = currentMonth.value - 1;
+  const today = new Date();
   const isCurrentMonth =
-      year === today.getFullYear() && month === today.getMonth()
+      year === today.getFullYear() && month === today.getMonth();
 
-  const firstDay = new Date(year, month, 1).getDay()
-  const lastDate = new Date(year, month + 1, 0).getDate()
+  const firstDay = new Date(year, month, 1).getDay();
+  const lastDate = new Date(year, month + 1, 0).getDate();
 
   const days = []
 
   // 빈 칸
   for (let i = 0; i < firstDay; i++) {
-    days.push({date: null, sales: 0, orders: 0, isToday: false})
+    days.push({date: null, sales: 0, isToday: false})
   }
 
   // 날짜
   for (let date = 1; date <= lastDate; date++) {
-    const orders = Math.floor(Math.random() * 50) + 10
     days.push({
       date,
-      sales: Math.floor(Math.random() * 2000000) + 500000,
-      orders,
+      sales: monthlySalesMap.value[date] || 0,
       isToday: isCurrentMonth && date === today.getDate(),
     })
   }
-
   calendarDays.value = days
 }
 const todaySales = ref(0);
@@ -149,7 +144,7 @@ const todayOrderCount = ref(0);
 const averagePrice = ref(0);
 
 const fetchTodaySettlement = async () => {
-  const token = localStorage.getItem('storeAccessToken');
+  const token = localStorage.getItem('accessToken');
   if (!token) return;
   try {
     const res = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/owner/settlement`, {
@@ -164,25 +159,74 @@ const fetchTodaySettlement = async () => {
     toast.error(e.response?.data?.errorMessage || "정산 조회에 실패했습니다.");
   }
 }
-// ── 이벤트 핸들러 ─────────────────────────────────────
-const selectDay = (day) => {
-  selectedDay.value = day
-}
 
-const previousMonth = () => {
+const previousMonth = async () => {
   if (currentMonth.value === 1) {
     currentMonth.value = 12;
     currentYear.value--
   } else currentMonth.value--
-  generateCalendar()
+  await fetchMonthlyCalender();
 }
 
-const nextMonth = () => {
+const nextMonth = async () => {
   if (currentMonth.value === 12) {
     currentMonth.value = 1;
     currentYear.value++
   } else currentMonth.value++
-  generateCalendar()
+  await fetchMonthlyCalender();
+}
+
+// 상태
+const monthlySalesMap = ref({});
+const fetchMonthlyCalender = async () => {
+  const token = localStorage.getItem("accessToken");
+  if (!token) {
+    generateCalendar();
+    return;
+  }
+
+  try {
+    const res = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/store/monthlysettlement`, {
+      params: {year: currentYear.value, month: currentMonth.value},
+      headers: {Authorization: `Bearer ${token}`}
+    });
+    monthlySalesMap.value = res.data.dailySales;
+  } catch (e) {
+    toast.error(e.response?.data?.errorMessage || "월별 매출 조회 실패");
+  }
+  generateCalendar();
+}
+
+const fetchDailyDetail = async (date) => {
+  try {
+    const res = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/store/dailysettlement`, {
+      params: {
+        year: currentYear.value,
+        month: currentMonth.value,
+        day: date
+      },
+    })
+    selectedDay.value = {
+      date: date,
+      sales: res.data.dayTotal,
+      orders: res.data.orderCount,
+      averageOrderAmount: res.data.averageOrderAmount
+    }
+  } catch (e) {
+    // 이미 기본값으로 모달 떠있으니 그대로 유지
+  }
+}
+// 달력에서 날짜 선택했을 때
+const selectDay = (day) => {
+  const sales = monthlySalesMap.value[day.date] || 0
+  selectedDay.value = {
+    date: day.date,
+    sales: sales,
+    orders: 0,
+    averageOrderAmount: 0
+  }
+  // 상세 데이터 비동기로 가져와서 업데이트
+  fetchDailyDetail(day.date)
 }
 
 // ── 포맷 ─────────────────────────────────────────────
@@ -193,9 +237,9 @@ const formatPriceShort = (price) => {
   return price.toLocaleString('ko-KR')
 }
 
-onMounted(() => {
-  fetchTodaySettlement()
-  generateCalendar()
+onMounted(async () => {
+  await fetchMonthlyCalender()
+  await fetchTodaySettlement()
 })
 </script>
 <style scoped>

@@ -708,49 +708,4 @@ const logout = () => {
 
 <style scoped>
 @import "@/assets/css/OwnerSettings.css";
-
-/* 아코디언 스타일 */
-.accordion-header {
-  cursor: pointer;
-  user-select: none;
-}
-.accordion-header:hover {
-  opacity: 0.85;
-}
-.option-title {
-  flex: 1;
-  font-weight: 700;
-}
-.accordion-arrow {
-  font-size: 12px;
-  color: #a1a1aa;
-  margin-right: 8px;
-}
-.accordion-body {
-  padding: 12px 0 4px 0;
-  border-top: 1px solid #3f3f46;
-  margin-top: 4px;
-}
-.option-name-edit {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.remove-option-btn {
-  width: 36px !important;
-  height: 36px !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  line-height: 1 !important;
-  flex-shrink: 0;
-  align-self: center !important;
-}
-.btn-add-small {
-  padding-left: 12px !important;
-  padding-right: 12px !important;
-  flex-shrink: 0;
-  width: auto !important;
-}
 </style>

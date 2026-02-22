@@ -165,12 +165,12 @@ const handleSubmit = async () => {
     return;
   }
 
-  isLoading.value = true;
+  isLoading.value = true
   try {
     // 1. 하드코딩된 localStorage.setItem 줄은 완전히 삭제하세요!
-    
+
     // 2. 서버에서 받은 실제 accessToken을 가져옵니다.
-    const token = localStorage.getItem('accessToken'); 
+    const token = localStorage.getItem('accessToken');
 
     if (!token) {
       throw new Error("로그인 정보가 없습니다. 다시 로그인해 주세요.");
@@ -199,11 +199,10 @@ const handleSubmit = async () => {
     setTimeout(() => {
       router.push('/another/dashboard');
     }, 1200);
-
   } catch (e) {
     errorMessage.value = e.message;
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 };
 
