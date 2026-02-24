@@ -97,18 +97,14 @@
                 <span style="font-size:11px; color:#a1a1aa;">{{ showRegisterCategoryDropdown ? '▲' : '▼' }}</span>
               </div>
               <div v-if="showRegisterCategoryDropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; background:#27272a; border:1px solid #3f3f46; border-radius:8px; z-index:100; overflow:hidden;">
-                <div v-for="cat in categories" :key="cat.categoryId"
-                  style="border-bottom:1px solid #3f3f46;">
+                <div v-for="cat in categories" :key="cat.categoryId" style="border-bottom:1px solid #3f3f46;">
                   <div v-if="editingCategoryId !== cat.categoryId"
                     style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px;"
                     :style="{ background: newMenu.categoryId === cat.categoryId ? '#3f3f46' : '' }">
                     <span style="font-size:14px; color:#fafafa; flex:1; cursor:pointer;"
                       @click="newMenu.categoryId = cat.categoryId; showRegisterCategoryDropdown = false">{{ cat.categoryName }}</span>
                     <button @click.stop="editingCategoryId = cat.categoryId; editingCategoryName = cat.categoryName"
-                      style="padding:2px 8px; font-size:11px; background:transparent; color:#a1a1aa; border:1px solid #3f3f46; border-radius:4px; cursor:pointer; flex-shrink:0; margin-left:8px;"
-                      @mouseover="$event.target.style.cssText='padding:2px 8px;font-size:11px;background:#3f3f46;color:#fafafa;border:1px solid #52525b;border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:8px;'"
-                      @mouseout="$event.target.style.cssText='padding:2px 8px;font-size:11px;background:transparent;color:#a1a1aa;border:1px solid #3f3f46;border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:8px;'"
-                    >수정</button>
+                      style="padding:2px 8px; font-size:11px; background:transparent; color:#a1a1aa; border:1px solid #3f3f46; border-radius:4px; cursor:pointer; flex-shrink:0; margin-left:8px;">수정</button>
                   </div>
                   <div v-else style="display:flex; gap:4px; align-items:center; padding:8px 12px; background:#18181b;">
                     <input v-model="editingCategoryName" type="text"
@@ -152,7 +148,6 @@
             <label class="form-label">설명</label>
             <textarea v-model="newMenu.description" class="form-textarea" placeholder="메뉴 설명을 입력하세요"></textarea>
           </div>
-          <!-- 옵션 섹션 -->
           <div class="form-group">
             <label class="form-label">옵션</label>
             <div v-for="(option, oIdx) in newMenu.options" :key="oIdx" class="option-group">
@@ -229,18 +224,14 @@
                 <span style="font-size:11px; color:#a1a1aa;">{{ showEditCategoryDropdown ? '▲' : '▼' }}</span>
               </div>
               <div v-if="showEditCategoryDropdown" style="position:absolute; top:calc(100% + 4px); left:0; right:0; background:#27272a; border:1px solid #3f3f46; border-radius:8px; z-index:100; overflow:hidden;">
-                <div v-for="cat in categories" :key="cat.categoryId"
-                  style="border-bottom:1px solid #3f3f46;">
+                <div v-for="cat in categories" :key="cat.categoryId" style="border-bottom:1px solid #3f3f46;">
                   <div v-if="editingCategoryId !== cat.categoryId"
                     style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px;"
                     :style="{ background: editMenu.categoryId === cat.categoryId ? '#3f3f46' : '' }">
                     <span style="font-size:14px; color:#fafafa; flex:1; cursor:pointer;"
                       @click="editMenu.categoryId = cat.categoryId; showEditCategoryDropdown = false">{{ cat.categoryName }}</span>
                     <button @click.stop="editingCategoryId = cat.categoryId; editingCategoryName = cat.categoryName"
-                      style="padding:2px 8px; font-size:11px; background:transparent; color:#a1a1aa; border:1px solid #3f3f46; border-radius:4px; cursor:pointer; flex-shrink:0; margin-left:8px;"
-                      @mouseover="$event.target.style.cssText='padding:2px 8px;font-size:11px;background:#3f3f46;color:#fafafa;border:1px solid #52525b;border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:8px;'"
-                      @mouseout="$event.target.style.cssText='padding:2px 8px;font-size:11px;background:transparent;color:#a1a1aa;border:1px solid #3f3f46;border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:8px;'"
-                    >수정</button>
+                      style="padding:2px 8px; font-size:11px; background:transparent; color:#a1a1aa; border:1px solid #3f3f46; border-radius:4px; cursor:pointer; flex-shrink:0; margin-left:8px;">수정</button>
                   </div>
                   <div v-else style="display:flex; gap:4px; align-items:center; padding:8px 12px; background:#18181b;">
                     <input v-model="editingCategoryName" type="text"
@@ -277,11 +268,13 @@
             <textarea v-model="editMenu.explanation" class="form-textarea"></textarea>
           </div>
           <div class="form-group">
-            <label class="form-label">메뉴 이미지 변경</label>
-            <input type="file" accept="image/*" @change="(e) => { editMenu.imageFile = e.target.files[0] }" class="form-input" />
+            <label class="form-label">메뉴 이미지</label>
+            <img v-if="editMenu.imageUrl && !editMenu.imagePreview" :src="editMenu.imageUrl"
+              style="width:100px; height:100px; object-fit:cover; margin-bottom:8px; border-radius:8px;" />
+            <img v-if="editMenu.imagePreview" :src="editMenu.imagePreview"
+              style="width:100px; height:100px; object-fit:cover; margin-bottom:8px; border-radius:8px;" />
+            <input type="file" accept="image/*" @change="handleEditImageUpload" class="form-input" />
           </div>
-
-          <!-- 옵션 -->
           <div class="form-group">
             <label class="form-label">옵션</label>
             <div v-for="option in editMenu.options" :key="option.optionId" class="option-group">
@@ -319,18 +312,42 @@
           <button class="close-btn" @click="activeModal = null">×</button>
         </div>
         <div class="modal-body">
+          <!-- 영업 시작 시간 -->
           <div class="form-group">
             <label class="form-label">영업 시작 시간</label>
-            <input type="time" v-model="businessHours.open" class="form-input time-input" />
+            <div class="custom-time-picker">
+              <div class="ampm-toggle">
+                <button type="button" :class="['ampm-btn', { active: hoursOpenAmPm === 'AM' }]" @click="hoursOpenAmPm = 'AM'">오전</button>
+                <button type="button" :class="['ampm-btn', { active: hoursOpenAmPm === 'PM' }]" @click="hoursOpenAmPm = 'PM'">오후</button>
+              </div>
+              <select class="time-select" v-model="hoursOpenHour">
+                <option v-for="h in timeHours" :key="h" :value="h">{{ h }}시</option>
+              </select>
+              <select class="time-select" v-model="hoursOpenMinute">
+                <option v-for="m in timeMinutes" :key="m" :value="m">{{ String(m).padStart(2,'0') }}분</option>
+              </select>
+            </div>
           </div>
+          <!-- 영업 종료 시간 -->
           <div class="form-group">
             <label class="form-label">영업 종료 시간</label>
-            <input type="time" v-model="businessHours.close" class="form-input time-input" />
+            <div class="custom-time-picker">
+              <div class="ampm-toggle">
+                <button type="button" :class="['ampm-btn', { active: hoursCloseAmPm === 'AM' }]" @click="hoursCloseAmPm = 'AM'">오전</button>
+                <button type="button" :class="['ampm-btn', { active: hoursCloseAmPm === 'PM' }]" @click="hoursCloseAmPm = 'PM'">오후</button>
+              </div>
+              <select class="time-select" v-model="hoursCloseHour">
+                <option v-for="h in timeHours" :key="h" :value="h">{{ h }}시</option>
+              </select>
+              <select class="time-select" v-model="hoursCloseMinute">
+                <option v-for="m in timeMinutes" :key="m" :value="m">{{ String(m).padStart(2,'0') }}분</option>
+              </select>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="activeModal = null">취소</button>
-          <button class="btn btn-primary" @click="saveBusinessHours">확인</button>
+          <button class="btn btn-primary" @click="saveBusinessHours">저장</button>
         </div>
       </div>
     </div>
@@ -435,7 +452,19 @@ const newMenu = reactive({
 const editMenu = ref(null)
 const expandedOptions = ref([])
 
-// ── 카테고리 인라인 추가 ──
+// ── 메뉴 수정 이미지 미리보기 ──
+const handleEditImageUpload = (e) => {
+  const file = e.target.files[0]
+  if (!file) {
+    editMenu.value.imagePreview = null
+    editMenu.value.imageFile = null
+    return
+  }
+  editMenu.value.imageFile = file
+  editMenu.value.imagePreview = URL.createObjectURL(file)
+}
+
+// ── 카테고리 ──
 const showNewCategoryInput = ref(false)
 const showRegisterCategoryDropdown = ref(false)
 const showEditCategoryDropdown = ref(false)
@@ -444,29 +473,75 @@ const editingCategoryName = ref('')
 const showEditCategoryInput = ref(false)
 const newCategoryName = ref('')
 
-// ── 영업시간 ──
-const businessHours = reactive({
-  open: '10:00',
-  close: '22:00'
-})
+// ── 영업시간 커스텀 피커 ──
+const timeHours   = Array.from({ length: 12 }, (_, i) => i + 1)
+const timeMinutes = [0, 10, 20, 30, 40, 50]
+
+const hoursOpenAmPm   = ref('AM')
+const hoursOpenHour   = ref(9)
+const hoursOpenMinute = ref(0)
+
+const hoursCloseAmPm   = ref('PM')
+const hoursCloseHour   = ref(10)
+const hoursCloseMinute = ref(0)
+
+const parseTime24 = (timeStr) => {
+  if (!timeStr) return null
+  const [hStr, mStr] = timeStr.split(':')
+  let h = parseInt(hStr)
+  const m = parseInt(mStr) || 0
+  const ampm = h < 12 ? 'AM' : 'PM'
+  if (h === 0) h = 12
+  else if (h > 12) h -= 12
+  return { ampm, hour: h, minute: m }
+}
+
+const toTime24 = (ampm, hour, minute) => {
+  let h = hour % 12
+  if (ampm === 'PM') h += 12
+  return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
 
 const openHoursModal = async () => {
   const storeId = localStorage.getItem('currentStoreId')
-
   if (!storeId) {
     alert('매장 정보가 없습니다.')
     return
   }
-
   try {
     const res = await api.get(`/store/${storeId}/time`)
-    businessHours.open = res.data.openAt?.slice(0, 5)
-    businessHours.close = res.data.closeAt?.slice(0, 5)
+    const openParsed  = parseTime24(res.data.OpenAt?.substring(0, 5))
+    const closeParsed = parseTime24(res.data.CloseAt?.substring(0, 5))
+    if (openParsed) {
+      hoursOpenAmPm.value   = openParsed.ampm
+      hoursOpenHour.value   = openParsed.hour
+      hoursOpenMinute.value = openParsed.minute
+    }
+    if (closeParsed) {
+      hoursCloseAmPm.value   = closeParsed.ampm
+      hoursCloseHour.value   = closeParsed.hour
+      hoursCloseMinute.value = closeParsed.minute
+    }
   } catch (e) {
-    console.error(e)
+    // 기본값 유지
   }
-
   activeModal.value = 'hours'
+}
+
+const saveBusinessHours = async () => {
+  const storeId = localStorage.getItem('currentStoreId')
+  const openTime  = toTime24(hoursOpenAmPm.value,  hoursOpenHour.value,  hoursOpenMinute.value)
+  const closeTime = toTime24(hoursCloseAmPm.value, hoursCloseHour.value, hoursCloseMinute.value)
+  try {
+    await api.patch(`/store/${storeId}/updatetime`, {
+      openAt:  openTime  + ':00',
+      closeAt: closeTime + ':00',
+    })
+    alert('영업시간이 저장되었습니다.')
+    activeModal.value = null
+  } catch (e) {
+    alert(e.response?.data?.errorMessage || '저장 실패')
+  }
 }
 
 // ── 마이페이지 ──
@@ -514,7 +589,6 @@ const loadCategories = async () => {
   }
 }
 
-// ── 사업자등록번호 포맷 (000-00-00000) ──
 const formatBusinessNumber = (value) => {
   const digits = (value || '').replace(/\D/g, '').slice(0, 10)
   if (digits.length <= 3) return digits
@@ -608,11 +682,8 @@ const registerMenu = async () => {
 
     for (const option of newMenu.options) {
       if (!option.optionName.trim()) continue
-      const optionRes = await api.post(`/store/menu/${menuId}/option`, {
-        optionName: option.optionName,
-      })
+      const optionRes = await api.post(`/store/menu/${menuId}/option`, { optionName: option.optionName })
       const optionId = optionRes.data
-
       for (const detail of option.details) {
         if (!detail.optionDetailName.trim()) continue
         await api.post(`/store/menu/option/${optionId}/detail`, {
@@ -636,12 +707,9 @@ const registerMenu = async () => {
   }
 }
 
-// ── 카테고리 인라인 추가 ──
+// ── 카테고리 추가 ──
 const addNewCategory = async (mode) => {
-  if (!newCategoryName.value.trim()) {
-    alert('카테고리 이름을 입력하세요.')
-    return
-  }
+  if (!newCategoryName.value.trim()) return alert('카테고리 이름을 입력하세요.')
   try {
     await api.post('/store/category/create', { categoryName: newCategoryName.value.trim() })
     await loadCategories()
@@ -660,10 +728,7 @@ const addNewCategory = async (mode) => {
 
 // ── 카테고리 수정 ──
 const updateCategory = async (categoryId) => {
-  if (!editingCategoryName.value.trim()) {
-    alert('카테고리 이름을 입력하세요.')
-    return
-  }
+  if (!editingCategoryName.value.trim()) return alert('카테고리 이름을 입력하세요.')
   try {
     await api.put(`/store/category/${categoryId}`, { categoryName: editingCategoryName.value.trim() })
     await loadCategories()
@@ -690,22 +755,13 @@ const deleteCategory = async (categoryId) => {
 // ── 메뉴 수정 열기 ──
 const openMenuDetail = async (menu) => {
   const menuId = menu.menuId ?? menu.id
-  if (!menuId) {
-    alert('메뉴 ID를 찾을 수 없습니다.')
-    return
-  }
+  if (!menuId) return alert('메뉴 ID를 찾을 수 없습니다.')
   expandedOptions.value = []
   showEditCategoryInput.value = false
   newCategoryName.value = ''
   editMenu.value = {
-    id: menuId,
-    menuName: menu.menuName || '',
-    price: menu.menuPrice || 0,
-    categoryId: null,
-    origin: '',
-    explanation: '',
-    imageFile: null,
-    options: [],
+    id: menuId, menuName: menu.menuName || '', price: menu.menuPrice || 0,
+    categoryId: null, origin: '', explanation: '', imageFile: null, options: [],
   }
   activeModal.value = 'menuDetail'
   try {
@@ -717,7 +773,9 @@ const openMenuDetail = async (menu) => {
       categoryId: res.data.categoryId ?? null,
       origin: res.data.origin || '',
       explanation: res.data.explanation || '',
+      imageUrl: res.data.imageUrl || null,
       imageFile: null,
+      imagePreview: null,
       options: (res.data.options || []).map(o => ({
         optionId: o.optionId,
         optionName: o.optionName || '',
@@ -729,12 +787,11 @@ const openMenuDetail = async (menu) => {
       })),
     }
   } catch (e) {
-    console.error('메뉴 상세 로딩 실패:', e)
     alert('메뉴 정보 로딩 실패: ' + (e.response?.data?.errorMessage || e.message))
   }
 }
 
-// ── 메뉴 정보 저장 ──
+// ── 메뉴 저장 ──
 const saveMenuEdit = async () => {
   try {
     const formData = new FormData()
@@ -744,7 +801,6 @@ const saveMenuEdit = async () => {
     formData.append('explanation', editMenu.value.explanation || '')
     formData.append('categoryId', editMenu.value.categoryId)
     if (editMenu.value.imageFile) formData.append('menuImage', editMenu.value.imageFile)
-
     await api.put(`/store/menu/${editMenu.value.id}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
@@ -773,15 +829,14 @@ const deleteMenu = async () => {
 const addOption = async () => {
   try {
     const res = await api.post(`/store/menu/${editMenu.value.id}/option`, { optionName: '' })
-    const newOptionId = res.data
-    editMenu.value.options.push({ optionId: newOptionId, optionName: '', details: [] })
-    expandedOptions.value.push(newOptionId)
+    editMenu.value.options.push({ optionId: res.data, optionName: '', details: [] })
+    expandedOptions.value.push(res.data)
   } catch (e) {
     alert(e.response?.data?.errorMessage || '옵션 추가 실패')
   }
 }
 
-// ── 옵션명 수정 ──
+// ── 옵션 수정 ──
 const updateOption = async (option) => {
   try {
     await api.put(`/store/menu/option/${option.optionId}`, { optionName: option.optionName })
@@ -807,11 +862,9 @@ const deleteOption = async (optionId) => {
 const addOptionDetail = async (option) => {
   try {
     const res = await api.post(`/store/menu/option/${option.optionId}/detail`, {
-      optionDetailName: '',
-      optionDetailPrice: 0,
+      optionDetailName: '', optionDetailPrice: 0,
     })
-    const newDetailId = res.data
-    option.details.push({ optionDetailId: newDetailId, optionDetailName: '', optionDetailPrice: 0 })
+    option.details.push({ optionDetailId: res.data, optionDetailName: '', optionDetailPrice: 0 })
   } catch (e) {
     alert(e.response?.data?.errorMessage || '옵션 상세 추가 실패')
   }
@@ -839,21 +892,6 @@ const deleteOptionDetail = async (optionDetailId, optionId) => {
     if (option) option.details = option.details.filter(d => d.optionDetailId !== optionDetailId)
   } catch (e) {
     alert(e.response?.data?.errorMessage || '옵션 상세 삭제 실패')
-  }
-}
-
-// ── 영업시간 ──
-const saveBusinessHours = async () => {
-  const storeId = localStorage.getItem('currentStoreId')
-  try {
-    await api.patch(`/store/${storeId}/updatetime`, {
-      openAt: businessHours.open + ':00',
-      closeAt: businessHours.close + ':00',
-    })
-    alert('영업시간이 저장되었습니다.')
-    activeModal.value = null
-  } catch (e) {
-    alert(e.response?.data?.errorMessage || '저장 실패')
   }
 }
 
@@ -896,5 +934,69 @@ const logout = () => {
   box-sizing: border-box;
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+/* ── 커스텀 시간 선택기 ───────────────────────────── */
+.custom-time-picker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.ampm-toggle {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #3f3f46;
+}
+
+.ampm-btn {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #27272a;
+  color: #a1a1aa;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.ampm-btn:first-child {
+  border-right: 1px solid #3f3f46;
+}
+
+.ampm-btn.active {
+  background: #ea580c;
+  color: #fff;
+}
+
+.ampm-btn:not(.active):hover {
+  background: rgba(234, 88, 12, 0.15);
+  color: #ea580c;
+}
+
+.time-select {
+  padding: 10px 8px;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 8px;
+  color: #fafafa;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: auto;
+}
+
+.time-select:hover,
+.time-select:focus {
+  border-color: #ea580c;
 }
 </style>

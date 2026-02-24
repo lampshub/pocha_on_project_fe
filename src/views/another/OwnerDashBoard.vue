@@ -329,6 +329,10 @@ const goToOwnerView = async () => {
     const token = response.data.storeAccessToken;
 
     if (token) {
+      // ✅ BASE 토큰 백업 (뒤로가기 시 복원용)
+      const baseToken = localStorage.getItem('accessToken');
+      
+      localStorage.setItem('baseAccessToken', baseToken);
       // 3. 로컬 스토리지 갱신 (기존 BASE -> STORE 토큰으로 교체)
       localStorage.setItem('accessToken', token);
 

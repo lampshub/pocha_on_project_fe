@@ -53,8 +53,6 @@
       </div>
     </div>
 
-    </div>
-
     <!-- ==================== 이메일 찾기 모달 ==================== -->
     <div v-if="showFindEmailModal" class="modal-overlay" @click.self="closeFindEmailModal">
       <div class="modal-content">
@@ -247,13 +245,13 @@
         </div>
       </div>
     </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { onMounted } from 'vue'
 
 // 페이지 진입시 포커스 제거(커서 깜박임 없앰)
 onMounted(() => {
@@ -272,7 +270,7 @@ const API_BASE = process.env.VUE_APP_API_BASE_URL;
 
 const handleLogin = async () => {
   errorMessage.value = ''
-  
+
   if (!email.value || !password.value) {
     errorMessage.value = '이메일과 비밀번호를 모두 입력해주세요.'
     return
@@ -281,13 +279,11 @@ const handleLogin = async () => {
   isLoading.value = true
 
   try {
-    // 엔드포인트: http://localhost:8083/owner/baseLogin
     const response = await axios.post(`${API_BASE}/owner/baseLogin`, {
-      ownerEmail: email.value, // 백엔드 BaseLoginDto 필드명
+      ownerEmail: email.value,
       password: password.value
     });
 
-    // 백엔드 반환값: TokenDto (accessToken, refreshToken, name)
     const { accessToken, refreshToken, name } = response.data;
 
     // 토큰 저장
@@ -300,14 +296,13 @@ const handleLogin = async () => {
 
   } catch (error) {
     console.error('Login Error:', error);
-    
-    // 401 & 404 Unauthorized 에러 처리
+
     if (error.response && (error.response.status === 401 || error.response.status === 404)) {
-    errorMessage.value = '이메일 또는 비밀번호가 일치하지 않습니다.';
-  } else {
-    errorMessage.value = '로그인 중 오류가 발생했습니다. 서버 상태를 확인하세요.';
-  }
-}finally {
+      errorMessage.value = '이메일 또는 비밀번호가 일치하지 않습니다.';
+    } else {
+      errorMessage.value = '로그인 중 오류가 발생했습니다. 서버 상태를 확인하세요.';
+    }
+  } finally {
     isLoading.value = false
   }
 }
@@ -319,12 +314,11 @@ const findEmail = reactive({
   name: '',
   phone: '',
   code: '',
-  codeSent: false, // 인증번호 입력 단계 전환용
-  verified: false, // 결과 표시 단계 전환용
-  foundEmail: ''   // 백엔드에서 받은 마스킹된 이메일
+  codeSent: false,
+  verified: false,
+  foundEmail: ''
 })
 
-// 전화번호 하이픈 자동 삽입 (010-0000-0000)
 const formatPhoneNumber = (event) => {
   let value = event.target.value.replace(/[^0-9]/g, '')
   if (value.length <= 3) {
@@ -336,7 +330,6 @@ const formatPhoneNumber = (event) => {
   }
 }
 
-// 1. 인증번호 발송 (SmsSendReqDto 매핑)
 const handleSendEmailCode = async () => {
   findEmailError.value = ''
 
@@ -346,21 +339,18 @@ const handleSendEmailCode = async () => {
   }
 
   try {
-    // POST http://localhost:8083/auth/sms/send
     await axios.post(`${API_BASE}/auth/sms/send`, {
       name: findEmail.name,
-      phone: findEmail.phone // 하이픈 포함 전송 시 백엔드 SmsSender에서 정제함
+      phone: findEmail.phone
     });
 
     findEmail.codeSent = true;
     alert('인증 코드가 발송되었습니다.');
   } catch (error) {
-    // 백엔드 throw new RuntimeException 메시지 처리
     findEmailError.value = error.response?.data?.message || '인증번호 발송에 실패했습니다. 정보를 확인해주세요.';
   }
 }
 
-// 2. 인증번호 확인 및 이메일 조회 (SmsVerifyReqDto 매핑)
 const handleVerifyEmailCode = async () => {
   findEmailError.value = ''
 
@@ -370,23 +360,19 @@ const handleVerifyEmailCode = async () => {
   }
 
   try {
-    // POST http://localhost:8083/auth/sms/verify
     const response = await axios.post(`${API_BASE}/auth/sms/verify`, {
       name: findEmail.name,
       phone: findEmail.phone,
       code: findEmail.code
     });
 
-    // 성공 시 백엔드에서 마스킹된 이메일 문자열(String)을 직접 반환함
-    findEmail.foundEmail = response.data; 
+    findEmail.foundEmail = response.data;
     findEmail.verified = true;
   } catch (error) {
-    // 5회 실패 차단, 코드 불일치 등 메시지 처리
     findEmailError.value = error.response?.data?.message || '인증에 실패했습니다.';
   }
 }
 
-// 모달 닫기 시 데이터 초기화
 const closeFindEmailModal = () => {
   showFindEmailModal.value = false
   Object.assign(findEmail, {
@@ -408,27 +394,25 @@ const passwordResetComplete = ref(false)
 const findPassword = reactive({
   email: '',
   code: '',
-  codeSent: false,    // 인증번호 입력 단계
-  verified: false,    // 새 비밀번호 입력 단계
+  codeSent: false,
+  verified: false,
   newPassword: '',
   newPasswordConfirm: ''
 })
 
-// 1. 이메일 인증코드 발송 (EmailRequestDto 매핑)
 const handleSendCode = async () => {
   findPasswordError.value = ''
-  
+
   if (!findPassword.email) {
     findPasswordError.value = '이메일을 입력해주세요.'
     return
   }
 
   try {
-    // POST /auth/email/send
     await axios.post(`${API_BASE}/auth/email/send`, {
       email: findPassword.email
     });
-    
+
     findPassword.codeSent = true
     alert('인증 코드가 이메일로 발송되었습니다.')
   } catch (error) {
@@ -436,7 +420,6 @@ const handleSendCode = async () => {
   }
 }
 
-// 2. 인증코드 검증 (EmailVerifyRequest 매핑)
 const handleVerifyCode = async () => {
   findPasswordError.value = ''
 
@@ -446,8 +429,6 @@ const handleVerifyCode = async () => {
   }
 
   try {
-    // POST /auth/email/verify
-    // 성공 시 백엔드 Redis에 "EMAIL_VERIFIED:이메일"이 10분간 저장됨
     await axios.post(`${API_BASE}/auth/email/verify`, {
       email: findPassword.email,
       code: findPassword.code
@@ -455,12 +436,10 @@ const handleVerifyCode = async () => {
 
     findPassword.verified = true
   } catch (error) {
-    // 차단 여부, 코드 불일치 등 메시지 출력
     findPasswordError.value = error.response?.data?.message || '인증에 실패했습니다.'
   }
 }
 
-// 3. 비밀번호 변경 실행 (PasswordResetReqDto 매핑)
 const handleResetPassword = async () => {
   findPasswordError.value = ''
 
@@ -480,7 +459,6 @@ const handleResetPassword = async () => {
   }
 
   try {
-    // POST /auth/password/reset
     await axios.post(`${API_BASE}/auth/password/reset`, {
       email: findPassword.email,
       newPassword: findPassword.newPassword
@@ -488,12 +466,10 @@ const handleResetPassword = async () => {
 
     passwordResetComplete.value = true
   } catch (error) {
-    // 이메일 인증 필요, 기존 비번 동일 등 메시지 처리
     findPasswordError.value = error.response?.data?.message || '비밀번호 변경에 실패했습니다.'
   }
 }
 
-// 모달 초기화
 const closeFindPasswordModal = () => {
   showFindPasswordModal.value = false
   Object.assign(findPassword, {
@@ -510,7 +486,5 @@ const closeFindPasswordModal = () => {
 </script>
 
 <style scoped>
-
 @import "@/assets/css/OwnerLogin.css";
-
 </style>

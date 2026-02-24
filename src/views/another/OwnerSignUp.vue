@@ -90,40 +90,25 @@
           </div>
         </div>
 
-
         <!-- 전체 에러 메시지 -->
-
-        <div v-if="errorMessage" class="error-message" style="margin-top: 20px;"> <!--margin-top 8 ??-->
-
+        <div v-if="errorMessage" class="error-message" style="margin-top: 20px;">
           <span>⚠️</span>
-
           <span>{{ errorMessage }}</span>
-
         </div>
 
-
         <!-- 회원가입 버튼 -->
-
         <button type="submit" class="submit-btn" :disabled="isLoading">
           <span v-if="isLoading" class="loading"></span>
           <span v-else>회원가입</span>
         </button>
 
-
         <!-- 취소 버튼 -->
-
         <button
-
             type="button"
-
             class="cancel-btn"
-
             @click="handleCancel"
-
             :disabled="isLoading"
-
         >
-
           취소
         </button>
       </form>
@@ -131,7 +116,6 @@
 
 
     <!-- ==================== 사업자 인증 모달 ==================== -->
-
     <div v-if="showVerifyModal" class="modal-overlay" @click.self="closeVerifyModal">
       <div class="modal-content">
         <div class="modal-header">
@@ -139,31 +123,53 @@
           <p class="modal-description">사업자 등록번호와 대표자명을 입력하여 인증을 진행합니다.</p>
         </div>
 
-
         <form @submit.prevent="verifyBusiness" class="modal-form">
           <div class="form-group">
-            <input type="text" class="form-input" v-model="businessData.b_no" placeholder="사업자 등록번호 * (10자리, 하이픈 없이)" maxlength="10" @input="formatBusinessNumberOnly" required />
+            <input
+              type="text"
+              class="form-input"
+              v-model="businessData.b_no"
+              placeholder="사업자 등록번호 * (- 없이 10자리 입력해주세요.)"
+              maxlength="12"
+              @input="formatBusinessNumberOnly"
+              required
+            />
           </div>
-
 
           <div class="form-group">
             <input type="text" class="form-input" v-model="businessData.p_nm" placeholder="대표자명 *" required />
           </div>
 
-
           <div class="form-group">
-            <input type="text" class="form-input" v-model="businessData.start_dt" placeholder="개업일자 * (예: 20200101)" maxlength="8" @input="formatStartDate" required />
+            <input
+              type="text"
+              class="form-input"
+              :value="formattedStartDate"
+              placeholder="개업일자 * (YYYYMMDD)"
+              maxlength="10"
+              @input="formatStartDate"
+              required
+            />
           </div>
-
-
+          <div
+            v-if="businessData.start_dt.length === 8 && !isValidStartDate"
+            class="error-message"
+          >
+            <span>⚠️</span>
+            <span>올바른 날짜를 입력해주세요.</span>          
+          </div>
           <div v-if="verifyErrorMessage" class="error-message">
             <span>⚠️</span><span>{{ verifyErrorMessage }}</span>
           </div>
         </form>
 
-
         <div class="modal-buttons">
-          <button type="button" class="modal-btn modal-btn-primary" @click="verifyBusiness" :disabled="isVerifying">
+          <button
+            type="button"
+            class="modal-btn modal-btn-primary"
+            @click="verifyBusiness"
+            :disabled="isVerifying || !isValidStartDate"
+          >
             <span v-if="isVerifying" class="loading"></span>
             <span v-else>인증하기</span>
           </button>
@@ -177,11 +183,8 @@
 <script setup>
 
 import {ref, reactive, computed} from 'vue';
-
 import axios from 'axios';
-
 import {useRouter} from 'vue-router';
-
 import {useToast} from "vue-toastification";
 
 const toast = useToast();
@@ -189,7 +192,6 @@ const router = useRouter();
 
 
 // 1. 회원가입 폼 데이터
-
 const formData = reactive({
   ownerName: '',
   ownerEmail: '',
@@ -199,26 +201,20 @@ const formData = reactive({
   businessRegistrationNumber: ''
 });
 
-
 // 2. 사업자 인증 모달용 데이터
-
 const businessData = reactive({
   b_no: '',
   p_nm: '',
   start_dt: ''
 });
 
-
 // 상태 관리 변수들
-
 const isLoading = ref(false);
 const isVerifying = ref(false);
 const showVerifyModal = ref(false);
 const isBusinessVerified = ref(false);
 
-
 // 에러/성공 메시지 변수
-
 const passwordError = ref('');
 const passwordMatchError = ref('');
 const passwordMatchSuccess = ref(false);
@@ -228,7 +224,6 @@ const verifyErrorMessage = ref('');
 
 
 // --- 비밀번호 유효성 및 일치 체크 ---
-
 const checkPassword = () => {
   const reg = /^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,25}$/;
   if (!reg.test(formData.password)) {
@@ -261,19 +256,58 @@ const passwordConfirmClass = computed(() => {
 
 
 // --- 전화번호 자동 하이픈 포맷 ---
-
 const formatPhoneNumber = () => {
   formData.phoneNumber = formData.phoneNumber
-
       .replace(/[^0-9]/g, '')
-
       .replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`);
-
 };
 
 
-// --- 모달 제어 ---
+// --- 사업자등록번호 자동 하이픈 포맷 (000-00-00000) ---
+const formatBusinessNumber = (value) => {
+  const digits = (value || '').replace(/\D/g, '').slice(0, 10)
+  if (digits.length <= 3) return digits
+  if (digits.length <= 5) return `${digits.slice(0,3)}-${digits.slice(3)}`
+  return `${digits.slice(0,3)}-${digits.slice(3,5)}-${digits.slice(5)}`
+}
 
+const formatBusinessNumberOnly = () => {
+  businessData.b_no = formatBusinessNumber(businessData.b_no)
+}
+
+// --- 사업장 개업일자 자동 하이픈 포맷 (0000-00-00) ---
+const formattedStartDate = computed(() => {
+  const digits = businessData.start_dt.replace(/\D/g, '').slice(0, 8)
+
+  if (digits.length <= 4) return digits
+  if (digits.length <= 6) return `${digits.slice(0,4)}-${digits.slice(4)}`
+  return `${digits.slice(0,4)}-${digits.slice(4,6)}-${digits.slice(6)}`
+})
+const formatStartDate = (e) => {
+  const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 8)
+  businessData.start_dt = onlyDigits
+}
+
+// 개업일자 - 날짜 유효성검사 
+const isValidStartDate = computed(() => {
+  const value = businessData.start_dt
+
+  if (value.length !== 8) return false
+
+  const year = Number(value.slice(0, 4))
+  const month = Number(value.slice(4, 6))
+  const day = Number(value.slice(6, 8))
+
+  const date = new Date(year, month - 1, day)
+
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  )
+})
+
+// --- 모달 제어 ---
 const openVerifyModal = () => {
   showVerifyModal.value = true;
 };
@@ -290,90 +324,71 @@ const closeVerifyModal = () => {
 
 // ==================== 사업자 인증 처리 ====================
 const verifyBusiness = async () => {
-
-  if (businessData.b_no.length !== 10) {
-
+  const rawBno = businessData.b_no.replace(/\D/g, '')
+  if (rawBno.length !== 10) {
     verifyErrorMessage.value = "사업자 번호 10자리를 입력해주세요.";
-
     return;
-
   }
 
-
   isVerifying.value = true;
-
   verifyErrorMessage.value = "";
 
-
   try {
-
     const payload = {
-
       businesses: [{
-
-        b_no: businessData.b_no,
-
+        b_no: rawBno,          // 하이픈 제거 후 전송
         p_nm: businessData.p_nm,
-
-        start_dt: businessData.start_dt
-
+        start_dt: businessData.start_dt.replace(/\D/g, '')
       }]
-
     };
-
 
     const response = await axios.post('http://localhost:8083/owner/business/verify', payload);
 
-
     if (response.data.data && response.data.data[0].valid === "01") {
-
       isBusinessVerified.value = true;
-
-      formData.businessRegistrationNumber = businessData.b_no;
-
-      alert("인증에 성공하였습니다.");
-
+      formData.businessRegistrationNumber = businessData.b_no; // 포맷된 값 저장
+      toast.success("인증에 성공하였습니다.");
       closeVerifyModal();
-
     } else {
-
       verifyErrorMessage.value = "사업자 정보가 일치하지 않습니다.";
-
     }
-
   } catch (error) {
-
     console.error(error);
-
     verifyErrorMessage.value = "인증 중 오류가 발생했습니다.";
-
   } finally {
-
     isVerifying.value = false;
-
   }
-
 };
 
-
 // --- 최종 회원가입 제출 ---
-
 const handleSubmit = async () => {
   errorMessage.value = ''
   businessVerifyError.value = ''
 
-  // 유효성 검사 로직 (생략 - 기존과 동일)
-  if (!formData.ownerName.trim()) { /* ... */
+  // 🔥 비밀번호 형식 검사
+  if (passwordError.value) {
+    errorMessage.value = "비밀번호 형식을 확인해주세요."
     return
   }
-  if (!isBusinessVerified.value) {
-    businessVerifyError.value = '사업자 인증이 필요합니다.';
-    errorMessage.value = '사업자 인증을 완료해주세요.';
-    return;
+
+  // 🔥 비밀번호 일치 검사
+  if (!passwordMatchSuccess.value) {
+    errorMessage.value = "비밀번호가 일치하지 않습니다."
+    return
   }
+
+  if (!formData.ownerName.trim()) {
+    return
+  }
+
+  if (!isBusinessVerified.value) {
+    businessVerifyError.value = '사업자 인증이 필요합니다.'
+    errorMessage.value = '사업자 인증을 완료해주세요.'
+    return
+  }
+
   isLoading.value = true;
   errorMessage.value = "";
-
 
   try {
     const data = {
@@ -381,7 +396,7 @@ const handleSubmit = async () => {
       ownerEmail: formData.ownerEmail,
       password: formData.password,
       phoneNumber: formData.phoneNumber,
-      businessRegistrationNumber: businessData.b_no,
+      businessRegistrationNumber: businessData.b_no.replace(/\D/g, ''), // 하이픈 제거 후 전송
     };
 
     console.log("전송 데이터:", data);
