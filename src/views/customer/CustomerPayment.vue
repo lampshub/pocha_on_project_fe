@@ -2,7 +2,7 @@
   <div class="customer-payment-page">
     <div class="payment-header">
       <button class="back-btn" @click="goBack">← 뒤로</button>
-      <h2 class="payment-title">{{ tableNumber }}번 테이블 결제</h2>
+      <h2 class="payment-title">{{ tableNum }}번 테이블 결제</h2>
     </div>
 
     <PaymentWidget
@@ -30,17 +30,33 @@ import axios from "axios";
 const router = useRouter()
 const route = useRoute()
 
-const selectedTableData = JSON.parse(localStorage.getItem('selectedTable') || '{}')
-const tableNumber = ref(selectedTableData.tableNum || 0)
+const selectedTableData = JSON.parse(
+    localStorage.getItem("selectedTable") || "{}",
+);
+
+const parseJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(decodeURIComponent(atob(base64).split('').map(
+        c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join('')))
+  } catch (e) {
+    return {}
+  }
+}
+const tokenPayload = parseJwt(localStorage.getItem('accessToken') || '')
+const tableNum = ref(tokenPayload.tableNum || selectedTableData.tableNum || 0)
 const totalAmount = ref(0)
 const groupId = ref('')
 
+// 테슽,
 onMounted(async () => {
   // 쿼리 파라미터에서 금액과 그룹ID를 가져옵니다.
   groupId.value = route.query.groupId || localStorage.getItem('currentGroupId') || '';
   if (!groupId.value) {
-    toast.error('주문 정보가 없습니다');
     router.back();
+    toast.error('주문 정보가 없습니다');
     return;
   }
   try {
@@ -55,12 +71,12 @@ onMounted(async () => {
   }
 })
   const orderName = computed(() =>
-      `포차온 ${tableNumber.value}번 테이블 주문`
+      `포차온 ${tableNum.value}번 테이블 주문`
   )
 
   const paymentMetadata = computed(() => ({
     tableId: selectedTableData.customerTableId,
-    tableNumber: tableNumber.value,
+    tableNum: tableNum.value,
     groupId: groupId.value,
     payerType: 'CUSTOMER',
   }))

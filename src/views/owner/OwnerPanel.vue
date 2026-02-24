@@ -7,6 +7,7 @@
         <button class="nav-btn-header" :class="{ active: showTableView }" @click="showTableView = !showTableView">
           {{ showTableView ? '📋 실시간 주문' : '🪑 테이블 현황' }}
         </button>
+        <router-link to="/owner/kitchen" class="nav-btn-header">🍳 주방</router-link>
         <router-link to="/owner/settlement" class="nav-btn-header">📊 매출 정산</router-link>
         <router-link to="/owner/settings" class="nav-btn-header">⚙️ 설정 관리</router-link>
         <button class="back-btn" @click="goBackToDashboard">🏠 대시보드</button>

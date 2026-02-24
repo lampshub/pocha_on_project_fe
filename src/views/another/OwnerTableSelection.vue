@@ -69,7 +69,7 @@ export default {
   methods: {
     async selectTable(table) {
       if (table.isOccupied) {
-        alert(`테이블 ${table.tableNum}번은 현재 사용 중입니다.`);
+        toast.info(`테이블 ${table.tableNum}번은 현재 사용 중입니다.`);
         return;
       }
 
@@ -83,7 +83,7 @@ export default {
 
         if (!newToken) {
           console.error("TABLE 토큰이 응답에 없습니다.");
-          alert("테이블 인증에 실패했습니다.");
+          toast.error("테이블 인증에 실패했습니다.");
           return;
         }
 
@@ -94,13 +94,12 @@ export default {
         this.$router.push({
           name: "CustomerMenu",
           params: {
-            storeId: this.storeInfo.id,
-            tableId: table.customerTableId,
+            tableId: table.tableNum,
           },
         });
       } catch (error) {
         console.error("테이블 선택 실패:", error);
-        alert("테이블 선택에 실패했습니다.");
+        toast.error("테이블 선택에 실패했습니다.");
       }
     },
 
@@ -134,7 +133,7 @@ export default {
     const storeId = localStorage.getItem("currentStoreId");
 
     if (!storeId) {
-      alert("잘못된 접근입니다.");
+      toast.error("잘못된 접근입니다.");
       this.$router.push("/");
       return;
     }

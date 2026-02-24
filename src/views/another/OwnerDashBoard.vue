@@ -155,6 +155,9 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios"; // 또는 이미 설정된 axios 인스턴스
+import {useToast} from 'vue-toastification'
+
+const toast = useToast();
 const router = useRouter();
 
 // ── 상태 ──────────────────────────────────────────────
@@ -293,7 +296,7 @@ const goToCustomerView = async () => {
     });
     const token = response.data.storeAccessToken;
     if (!token) {
-      alert("매장 인증에 실패했습니다.");
+      toast.error("매장 인증에 실패했습니다.");
       return;
     }
     // 2. BASE → STORE 토큰 교체
@@ -309,7 +312,7 @@ const goToCustomerView = async () => {
 
   } catch (error) {
     console.error("손님 화면 진입 실패:", error);
-    alert("매장 진입에 실패했습니다.");
+    toast.error("매장 진입에 실패했습니다.");
   }
 };
 
@@ -349,7 +352,7 @@ const goToOwnerView = async () => {
     }
   } catch (error) {
     console.error("매장 인증 및 이동 실패:", error);
-    alert("매장 진입에 실패했습니다.");
+    toast.error("매장 진입에 실패했습니다.");
   }
 };
 
@@ -360,4 +363,5 @@ const goToAddStore = () => {
 
 <style scoped>
 @import "@/assets/css/OwnerDashBoard.css";
+
 </style>

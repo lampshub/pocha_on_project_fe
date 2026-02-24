@@ -229,15 +229,15 @@
     </div>
   </div>
 
-    <!-- ── 채팅 패널 ───────────────────────────────────── -->
-    <div class="slide-panel" :class="{ open: showChatPanel }">
-      <div class="panel-header">
-        <h2 class="panel-title">{{ selectedChatTable }}번 테이블 채팅</h2>
-        <button class="close-btn" @click="closeChatPanel">✕</button>
-      </div>
-      <div class="panel-content chat-content">
-        <div class="chat-messages" ref="chatMessagesRef">
-          <div
+  <!-- ── 채팅 패널 ───────────────────────────────────── -->
+  <div class="slide-panel" :class="{ open: showChatPanel }">
+    <div class="panel-header">
+      <h2 class="panel-title">{{ selectedChatTable }}번 테이블 채팅</h2>
+      <button class="close-btn" @click="closeChatPanel">✕</button>
+    </div>
+    <div class="panel-content chat-content">
+      <div class="chat-messages" ref="chatMessagesRef">
+        <div
             v-for="(msg, idx) in chatMessages"
             :key="idx"
             :class="['chat-message', msg.isMine ? 'mine' : 'theirs']"
@@ -415,8 +415,21 @@ const currentSubscription = ref(null); // 구독 객체 저장용
 
 const GROUP_ID_KEY = "currentGroupId";
 
+// JWT 토큰에서 payload 파싱
+const parseJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(decodeURIComponent(atob(base64).split('').map(
+        c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join('')))
+  } catch (e) {
+    return {}
+  }
+}
 // ── 상태 ─────────────────────────────────────────────
-const tableNum = ref(selectedTableData.tableNum || 0)
+const tokenPayload = parseJwt(localStorage.getItem('accessToken') || '')
+const tableNum = ref(tokenPayload.tableNum || selectedTableData.tableNum || 0)
 const currentCategory = ref('main')
 const showOrderHistory = ref(false)
 const showCart = ref(false)
@@ -440,7 +453,7 @@ const presentUnread = ref(false)
 const presentToastTimer = ref(null)
 const showPresentToast = ref(false)
 const accessToken = ref(localStorage.getItem('accessToken'))
-const groupId = localStorage.getItem(GROUP_ID_KEY);
+// const groupId = localStorage.getItem(GROUP_ID_KEY);
 const clickCount = ref(0);
 const lastClickTime = ref(0);
 const tableStompClient = ref(null);
@@ -485,13 +498,13 @@ const releaseTable = (isExitingApp = false) => {
   const url = `${process.env.VUE_APP_API_BASE_URL}/customertable/tablerollback`;
 
   if (isExitingApp === true || typeof isExitingApp === 'object') {
-    const payload = JSON.stringify({ tableNum: tableData.tableNum });
-    const blob = new Blob([payload], { type: "application/json" });
+    const payload = JSON.stringify({tableNum: tableData.tableNum});
+    const blob = new Blob([payload], {type: "application/json"});
     const success = navigator.sendBeacon(url, blob);
     console.log("브라우저 종료/이동 시 Beacon 전송 결과:", success);
   } else {
-    axios.post(url, { tableNum: tableData.tableNum }, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+    axios.post(url, {tableNum: tableData.tableNum}, {
+      headers: {Authorization: `Bearer ${localStorage.getItem('accessToken')}`}
     }).catch(e => console.error("일반 이탈 시 해제 실패:", e));
   }
 
@@ -548,7 +561,7 @@ const closeSettingsModal = () => {
 };
 
 const verifyAdminPassword = async () => {
-  const selectedTableLocal = JSON.parse(localStorage.getItem("selectedTable"));
+  const customerTableId = tokenPayload.customerTableId;
   if (!adminPassword.value) {
     toast.warning("비밀번호를 입력해주세요.");
     return;
@@ -557,7 +570,7 @@ const verifyAdminPassword = async () => {
   try {
     await axios.post(`${process.env.VUE_APP_API_BASE_URL}/owner/verify-password`, {
       password: adminPassword.value,
-      customerTableId: selectedTableLocal.customerTableId
+      customerTableId: customerTableId
     }, {
       headers: {Authorization: `Bearer ${localStorage.getItem('accessToken')}`}
     });
@@ -899,7 +912,7 @@ const placeOrder = async () => {
     return;
 
   const payload = {
-    tableNumber: tableNum.value,
+    tableNum: tableNum.value,
     idempotencyKey: crypto.randomUUID(),
     webMenuList: [],
   };
@@ -929,13 +942,15 @@ const placeOrder = async () => {
   closePanel();
 };
 
+// 결제할 때 넘겨주는 파라미터 값 라우터 param은 tableNum
 const handlePayment = () => {
+  console.log('tableNum:', tableNum.value)  // 디버깅용
   router.push({
     name: 'CustomerPayment',
-    params: {tableNumber: tableNum.value},
+    params: {tableNum: tableNum.value},
     query: {
       amount: totalPrice.value,
-      groupId: groupId || ''
+      groupId: localStorage.getItem('currentGroupId')
     }
   });
 }
@@ -1092,6 +1107,7 @@ const connectTableWebSocket = () => {
   client.activate();
   tableStompClient.value = client;
 };
+
 
 // ── 선물 수신 처리 ───────────────────────────────────
 const handlePresentReceived = (presentData) => {

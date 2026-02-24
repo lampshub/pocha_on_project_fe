@@ -20,9 +20,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import {useToast} from 'vue-toastification'
 
 const router = useRouter()
 const route = useRoute()
+const toast = useToast();
 
 const tableNumber = ref(0)
 const totalAmount = ref(0)
@@ -35,7 +37,7 @@ onMounted(() => {
   tableId.value = route.query.tableId || null
 
   if (totalAmount.value <= 0) {
-    alert('결제 금액이 올바르지 않습니다.')
+    toast.error('결제 금액이 올바르지 않습니다.')
     router.back()
   }
 })
