@@ -283,11 +283,8 @@ const closeModal = () => {
 
 const goToCustomerView = async () => {
   if (!selectedStore.value) return;
-
   try {
     const baseUrl = process.env.VUE_APP_API_BASE_URL;
-
-    // 1. STORE 토큰 발급 (점주 화면과 동일)
     const response = await axios.post(`${baseUrl}/store/select`, {
       storeId: selectedStore.value.id
     });
@@ -296,17 +293,18 @@ const goToCustomerView = async () => {
       alert("매장 인증에 실패했습니다.");
       return;
     }
-    // 2. BASE → STORE 토큰 교체
-    localStorage.setItem('accessToken', token);
 
-    // 3. localStorage에 매장 정보 저장
+    // ── BASE 토큰 백업 추가 ──────────────────────────────
+    const baseToken = localStorage.getItem('accessToken');
+    localStorage.setItem('baseAccessToken', baseToken);
+
+    localStorage.setItem('accessToken', token);
     localStorage.setItem('currentStoreId', selectedStore.value.id);
     localStorage.setItem('currentStoreName', selectedStore.value.storeName);
     localStorage.setItem('currentStoreAddress', selectedStore.value.address);
 
     closeModal();
     router.push('/another/tableselect');
-
   } catch (error) {
     console.error("손님 화면 진입 실패:", error);
     alert("매장 진입에 실패했습니다.");

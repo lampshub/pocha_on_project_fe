@@ -326,8 +326,17 @@
   <div class="modal-content table-select-modal">
     <div class="modal-header">
       <h3>테이블 선택</h3>
-      <button class="close-btn" @click="closeChatModal">×</button>
-    </div>
+      <button
+    v-if="presentPendingList.length > 0"
+    class="present-header-icon"
+    @click="openPresentFromHeader"
+  >
+    🎁
+    <span class="present-header-badge">{{ presentPendingList.length }}</span>
+  </button>
+
+  <button class="close-btn" @click="closeChatModal">×</button>
+</div>
 
     <div class="modal-body">
       <div v-if="activeTables.length === 0" class="no-tables">
@@ -371,6 +380,30 @@
         취소
       </button>
     </div>
+    
+    <!-- ── 기존 대화방 목록 ── -->
+    <div v-if="myChatRooms.length > 0" class="existing-rooms-section">
+      <div class="existing-rooms-label">💬 대화 중인 채팅방</div>
+      <div class="existing-rooms-list">
+        <div
+          v-for="room in myChatRooms"
+          :key="room.id"
+          class="existing-room-item"
+          @click="openChat(room.otherTableNum)"
+        >
+          <div class="room-item-left">
+            <div class="room-table-avatar">{{ room.otherTableNum }}</div>
+            <div class="room-item-info">
+              <span class="room-table-num">{{ room.otherTableNum }}번 테이블</span>
+              <span class="room-last-msg">{{ room.lastMessage || '대화를 시작해보세요' }}</span>
+            </div>
+          </div>
+          <span v-if="room.unreadCount > 0" class="room-unread-badge">
+            {{ room.unreadCount }}
+          </span>
+        </div>
+      </div>
+    </div>  
   </div>
 </div>
 
@@ -462,6 +495,23 @@
       </div>
     </div>
   </div>
+   <div class="present-overlay" :class="{ active: presentOverlayVisible }">
+    <canvas class="present-confetti-canvas" ref="presentConfettiCanvasRef"></canvas>
+    <div class="present-backdrop" @click="closePresentPopup"></div>
+    <div class="present-card">
+      <button class="present-close-btn" @click="closePresentPopup">✕</button>
+      <div class="present-from-tag">
+        <span>📍</span>
+        <span>{{ presentActiveData?.fromTable }}번 테이블</span>에서 선물 도착!
+      </div>
+      <div class="present-image-box">
+        <div class="present-image-emoji">🎁</div>
+        <div class="present-item-name">{{ presentActiveData?.menuName }}</div>
+      </div>
+      <div class="present-footer-text">선물이 도착했어요 🎉</div>
+    </div>
+  </div>
+
 </template>
 
 <script setup>
@@ -479,11 +529,9 @@ const toast = useToast();
 const router = useRouter();
 
 // 로컬 스토리지 데이터 안전하게 가져오기
-const selectedTableData = JSON.parse(localStorage.getItem("selectedTable") || "{}");
 const adminPassword = ref("");
 const showSettingsModal = ref(false);
 const currentChatRoom = ref(null); // 현재 활성화된 채팅방 정보
-const storeId = ref(selectedTableData.storeId || 1); // 스토어 ID (localStorage에서 가져옴)
 const currentSubscription = ref(null); // 구독 객체 저장용
 
 // ── 상태 ─────────────────────────────────────────────
@@ -502,22 +550,11 @@ const parseJwt = (token) => {
     return {}
   }
 }
-
-const getSavedTable = () => {
-  const saved = localStorage.getItem("selectedTable");
-  if (!saved) return null;
-  try {
-    const parsed = JSON.parse(saved);
-    return typeof parsed === 'object' ? parsed : { tableNum: parsed };
-  } catch (e) { return { tableNum: Number(saved) }; }
-};
-
-// ── 새로고침 여부 판별 헬퍼 ──────────────────────────
-
-
 // ── 상태 ─────────────────────────────────────────────
 const tokenPayload = parseJwt(localStorage.getItem('accessToken') || '')
-const tableNum = ref(selectedTableData.tableNum || 0)
+const tableNum = ref(tokenPayload.tableNum || 0)
+const storeId = ref(tokenPayload.storeId || 1)
+const selectedTable = ref(tableNum.value ? { tableNum: tableNum.value } : null)
 const currentCategory = ref('main')
 const showOrderHistory = ref(false)
 const showCart = ref(false)
@@ -525,7 +562,6 @@ const showChatModal = ref(false)
 const showMenuDetail = ref(false)
 const showPresentPanel = ref(false)
 const showChatPanel = ref(false)
-const selectedTable = ref(getSavedTable());
 const selectedPresentTable = ref(null)
 const selectedChatTable = ref(null)
 const selectedMenu = ref(null)
@@ -540,16 +576,24 @@ const presentNotification = ref(null)
 const presentUnread = ref(false)
 const presentToastTimer = ref(null)
 const showPresentToast = ref(false)
+const presentPendingList = ref([])
+const presentActiveData = ref(null)
+const presentOverlayVisible = ref(false)
+const presentConfettiCanvasRef = ref(null)
+const presentConfettiAnim = ref(null)
+const presentParticles = ref([])
 const accessToken = ref(localStorage.getItem('accessToken'))
 const clickCount = ref(0);
 const lastClickTime = ref(0);
 const tableStompClient = ref(null);
 const sseAlarmSource = ref(null); // SSE 채팅 알림 접속 reader
+const TABLE_SESSION_KEY = "customer_table_session";
 
 // ── refs ─────────────────────────────────────────────
 const mainContent = ref(null);
 const chatMessagesRef = ref(null);
 const activeTables = ref([]);
+const myChatRooms = ref([]);    
 
 const categories = ref([]);
 const menus = ref([]);
@@ -580,42 +624,23 @@ const getUnreadCountForTable = (t) => unreadMessagesByTable.value[t] || 0;
 
 
 const releaseTable = (isExitingApp = false) => {
-  // ── 새로고침 판별 ──────────────────────────────────────────────────────
-  // sessionStorage는 탭이 살아있는 동안 유지됨.
-  // "is_session_active"가 있다 = 이미 세션이 시작된 탭 = 새로고침
-  // beforeunload/pagehide 시점에도 sessionStorage 값은 아직 살아있으므로
-  // PerformanceNavigationTiming보다 훨씬 신뢰할 수 있음.
-  const isReload = !!sessionStorage.getItem("is_session_active");
-  if (isReload) {
-    console.log("새로고침 감지 - 테이블 해제 건너뜀");
-    return;
-  }
-
-  const tableData = JSON.parse(localStorage.getItem("selectedTable") || "{}");
-  if (!tableData.tableNum) return;
+  const payload = parseJwt(localStorage.getItem('accessToken') || '')
+  // tableNum 대신 customerTableId 사용 (PK라 전역 유일)
+  const customerTableId = payload.customerTableId
+  if (!customerTableId) return;
 
   const url = `${process.env.VUE_APP_API_BASE_URL}/customertable/tablerollback`;
 
   if (isExitingApp === true || typeof isExitingApp === 'object') {
-    const payload = JSON.stringify({tableNum: tableData.tableNum});
-    const blob = new Blob([payload], {type: "application/json"});
-    const success = navigator.sendBeacon(url, blob);
-    console.log("브라우저 종료/이동 시 Beacon 전송 결과:", success);
-
-    // const xhr = new XMLHttpRequest();
-    // xhr.open("POST", url, false);
-    // xhr.setRequestHeader("Content-Type", "application/json");
-    // xhr.setRequestHeader("Authorization", `Bearer ${localStorage.getItem("accessToken")}`);
-    // xhr.send(JSON.stringify({ tableNum: tableData.tableNum }));
-
-
+    const blob = new Blob(
+      [JSON.stringify({ customerTableId })],
+      { type: "application/json" }
+    );
+    navigator.sendBeacon(url, blob);
   } else {
-    axios.post(url, {tableNum: tableData.tableNum}, {
-      headers: {Authorization: `Bearer ${localStorage.getItem('accessToken')}`}
-    }).catch(e => console.error("일반 이탈 시 해제 실패:", e));
+    axios.post(url, { customerTableId}).catch(e => console.error("테이블 해제 실패:", e));
   }
 
-  localStorage.removeItem("selectedTable");
   localStorage.removeItem(GROUP_ID_KEY);
 };
 
@@ -682,27 +707,25 @@ const verifyAdminPassword = async () => {
     await axios.post(`${process.env.VUE_APP_API_BASE_URL}/owner/verify-password`, {
       password: adminPassword.value,
       customerTableId: customerTableId
-    }, {
-      headers: {Authorization: `Bearer ${localStorage.getItem('accessToken')}`}
     });
 
-    const refreshToken = localStorage.getItem("refreshToken")?.trim();
-    const response = await axios
-      .create()
-      .post(
-        `${process.env.VUE_APP_API_BASE_URL}/owner/refresh`,
-        {},
-        { headers: { Authorization: `Bearer ${refreshToken}` } },
-      );
+    const baseToken = localStorage.getItem("baseAccessToken");
+    if (!baseToken) {
+      toast.error("점주 세션 정보가 없습니다. 다시 로그인해주세요.");
+      router.push("/");
+      return;
+    }
 
-    const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-      response.data;
-    localStorage.setItem("accessToken", newAccessToken);
-    localStorage.setItem("refreshToken", newRefreshToken);
+    // ── 순서 변경: 테이블 해제를 토큰 교체 전에 먼저 실행 ──
+    await releaseTable(false); // TABLE 토큰이 아직 살아있는 상태에서 해제
 
-    await releaseTable(false);
+    // 토큰 교체는 해제 후에
+    localStorage.setItem("accessToken", baseToken);
+    localStorage.removeItem("baseAccessToken");
+
     toast.success("관리자 인증 성공. 매장 선택 화면으로 이동합니다.");
     router.push("/another/dashboard");
+
   } catch (e) {
     console.error(e);
     toast.error("인증에 실패했습니다. 비밀번호를 확인해주세요.");
@@ -723,6 +746,9 @@ const handleHiddenAdminTrigger = () => {
 };
 
 onMounted(async () => {
+sessionStorage.setItem(TABLE_SESSION_KEY, "true");
+
+
   history.pushState(null, "", location.href);
   window.addEventListener("popstate", preventBack);
   window.addEventListener("pagehide", releaseTable);
@@ -742,6 +768,7 @@ onBeforeUnmount(() => {
   window.removeEventListener("popstate", preventBack);
   window.removeEventListener("pagehide", releaseTable);
   window.removeEventListener("beforeunload", releaseTable);
+  sessionStorage.removeItem(TABLE_SESSION_KEY);
 });
 
 onUnmounted(() => {
@@ -753,11 +780,15 @@ onUnmounted(() => {
 });
 
 onBeforeRouteLeave((to, from, next) => {
-  // 결제 페이지로 이동할 때는 테이블 해제 안 함
-  if (to.name === "CustomerPayment" || to.path.includes("/payment")) {
+  if (
+    to.name === "CustomerPayment" ||
+    to.path.includes("/payment") ||
+    to.path.includes("/dashboard") // ← 추가: 관리자 인증 후 이동 시 중복 해제 방지
+  ) {
     next();
     return;
   }
+  sessionStorage.removeItem(TABLE_SESSION_KEY);
   releaseTable(false);
   next();
 });
@@ -1073,11 +1104,23 @@ const openChatModal = async () => {
     showChatModal.value = true;
     selectedTable.value = null;
     // 테이블 목록과 unread 카운트를 동시에 최신화
-    await Promise.all([loadAvailableTables(), loadUnreadTotalCount()]);
+    await Promise.all([loadAvailableTables(), loadUnreadTotalCount(), loadMyChatRooms()]);
   } catch (e) {
     console.error("채팅 모달 열기 중 오류:", e);
   }
 };
+
+// 내 기존 활성 채팅방 목록 로드
+const loadMyChatRooms = async () => {
+  try {
+    const { data } = await chatApi.getMyActiveRooms(storeId.value, tableNum.value);
+    myChatRooms.value = data || [];
+  } catch (e) {
+    console.error("채팅방 목록 로드 실패:", e);
+    myChatRooms.value = [];
+  }
+};
+
 const closeChatModal = () => {
   showChatModal.value = false;
   selectedTable.value = null;
@@ -1241,8 +1284,6 @@ const connectTableWebSocket = () => {
         });
       });
     },
-
-
     onStompError: (frame) => console.error("손님 STOMP 에러:", frame),
   });
   client.activate();
@@ -1363,17 +1404,132 @@ const handlePresentReceived = (presentData) => {
   presentToastTimer.value = setTimeout(() => {
     showPresentToast.value = false;
   }, 5000);
+  presentPendingList.value.push({ ...presentData, id: Date.now() })
 };
+
+
+const _openPresentPopup = (presentData) => {
+  presentActiveData.value = presentData
+  presentOverlayVisible.value = true
+  nextTick(() => {
+    setTimeout(() => _launchPresentConfetti(), 150)
+  })
+}
+
 
 const onPresentToastClick = () => {
   showPresentToast.value = false;
   presentUnread.value = false;
   if (presentToastTimer.value) clearTimeout(presentToastTimer.value);
+  if (presentNotification.value) {
+    _openPresentPopup(presentNotification.value)
+    presentPendingList.value = presentPendingList.value.slice(1)
+  }
 };
+
+const openPresentFromHeader = () => {
+  if (presentPendingList.value.length === 0) return
+  const presentData = presentPendingList.value[0]
+  presentPendingList.value = presentPendingList.value.slice(1)
+  _openPresentPopup(presentData)
+}
+
+
+
+// ── 팝업 닫기 ────────────────────────────────────────
+const closePresentPopup = () => {
+  presentOverlayVisible.value = false
+  presentActiveData.value = null
+  if (presentConfettiAnim.value) cancelAnimationFrame(presentConfettiAnim.value)
+  if (presentConfettiCanvasRef.value) {
+    const ctx = presentConfettiCanvasRef.value.getContext('2d')
+    ctx.clearRect(0, 0, 9999, 9999)
+  }
+   if (presentPendingList.value.length === 0) {
+    presentUnread.value = false
+  }
+}
+
+// ── 폭죽 발사 ────────────────────────────────────────
+const PRESENT_CONFETTI_COLORS = ['#ff6b35','#e94560','#ffd700','#7c3aed','#00b4d8','#06d6a0','#ff6fa0','#ffa552']
+
+const _launchPresentConfetti = () => {
+  const canvas = presentConfettiCanvasRef.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  canvas.width  = canvas.offsetWidth
+  canvas.height = canvas.offsetHeight
+  const cx = canvas.width / 2, cy = canvas.height / 2
+  presentParticles.value = []
+  for (let i = 0; i < 250; i++) {
+    const angle = Math.random() * Math.PI * 2
+    const speed = 4 + Math.random() * 14
+    const size  = 5 + Math.random() * 9
+    const type  = Math.random() < 0.5 ? 'rect' : 'circle'
+    presentParticles.value.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - (Math.random() * 6 + 2),
+      gravity: 0.25 + Math.random() * 0.15,
+      color: PRESENT_CONFETTI_COLORS[Math.floor(Math.random() * PRESENT_CONFETTI_COLORS.length)],
+      size, type,
+      rotation: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 8,
+      alpha: 1, decay: 0.012 + Math.random() * 0.008,
+      w: type === 'rect' ? size       : size / 2,
+      h: type === 'rect' ? size * 0.4 : size / 2,
+    })
+  }
+  _addPresentBurstRings()
+  if (presentConfettiAnim.value) cancelAnimationFrame(presentConfettiAnim.value)
+  const draw = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    let alive = false
+    presentParticles.value.forEach(p => {
+      if (p.alpha <= 0) return
+      alive = true
+      p.x += p.vx; p.y += p.vy
+      p.vy += p.gravity; p.vx *= 0.99
+      p.rotation += p.rotSpeed; p.alpha -= p.decay
+      ctx.save()
+      ctx.globalAlpha = Math.max(0, p.alpha)
+      ctx.fillStyle   = p.color
+      ctx.translate(p.x, p.y)
+      ctx.rotate(p.rotation * Math.PI / 180)
+      if (p.type === 'rect') ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h)
+      else { ctx.beginPath(); ctx.arc(0, 0, p.w, 0, Math.PI * 2); ctx.fill() }
+      ctx.restore()
+    })
+    if (alive) presentConfettiAnim.value = requestAnimationFrame(draw)
+    else ctx.clearRect(0, 0, canvas.width, canvas.height)
+  }
+  draw()
+}
+
+const _addPresentBurstRings = () => {
+  const overlay = document.querySelector('.present-overlay')
+  if (!overlay) return
+  ;['#ff6b35','#e94560','#ffd700'].forEach((color, i) => {
+    const ring = document.createElement('div')
+    ring.className = 'present-burst-ring'
+    ring.style.cssText = `border-color:${color};animation-delay:${i * 0.08}s;animation-duration:${0.55 + i * 0.1}s;`
+    overlay.appendChild(ring)
+    ring.addEventListener('animationend', () => ring.remove())
+  })
+}
+
+
 
 // ── 선물 전송 ────────────────────────────────────────
 const sendPresent = async () => {
   if (!selectedMenu.value) return;
+
+  const payload = parseJwt(localStorage.getItem('accessToken') || '')
+
+  //   console.log('receiver:', selectedPresentTable.value);
+  // console.log('sender:', tableNum.value);
+  // console.log('storeId:', storeId.value);
+  // console.log('menuId:', selectedMenu.value.id);
 
   try {
     await customerOrderApi.sendPresent({
@@ -1382,6 +1538,8 @@ const sendPresent = async () => {
       receiverTableNum: selectedPresentTable.value,
       menuId: selectedMenu.value.id,
       menuQuantity: menuQuantity.value,
+      // storeId: Number(storeId.value),
+      storeId: payload.storeId, // 추가
     });
     toast.success(
       `${selectedPresentTable.value}번 테이블에 ${selectedMenu.value.name}을(를) 선물했습니다!`,

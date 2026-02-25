@@ -79,6 +79,7 @@ onMounted(async () => {
     tableNum: tableNum.value,
     groupId: groupId.value,
     payerType: 'CUSTOMER',
+    storeId: tokenPayload.storeId,
   }))
 
   const goBack = () => router.back()

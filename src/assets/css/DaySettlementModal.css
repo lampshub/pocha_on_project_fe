@@ -1,0 +1,793 @@
+/* ══════════════════════════════════════
+   Day Settlement Modal — Scoped Styles
+   ══════════════════════════════════════ */
+
+/* Overlay */
+.ds-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.ds-modal {
+    width: 100%;
+    max-width: 640px;
+    background: #111122;
+    border-radius: 20px;
+    overflow: hidden;
+    color: #F8FAFC;
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', -apple-system, sans-serif;
+    margin: 10px auto;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Header */
+.ds-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(17, 17, 34, 0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 14px 20px;
+}
+
+.ds-header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ds-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ds-back-btn {
+    background: none;
+    border: none;
+    color: #64748B;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    line-height: 1;
+}
+
+.ds-header-date {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.ds-header-dow {
+    color: #64748B;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.ds-header-sub {
+    font-size: 11px;
+    color: #64748B;
+}
+
+.ds-status-badge {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    background: rgba(34, 197, 94, 0.08);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    color: #22C55E;
+    font-weight: 600;
+}
+
+.ds-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22C55E;
+}
+
+/* Body */
+.ds-body {
+    padding: 16px 20px 40px;
+}
+
+/* Section */
+.ds-section {
+    background: #1A1A2E;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 12px;
+}
+
+.ds-section-settlement {
+    background: linear-gradient(180deg, #1A1A2E, rgba(249, 115, 22, 0.05));
+    border: 1px solid rgba(249, 115, 22, 0.12);
+}
+
+/* SectionHeader */
+.ds-sh {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.ds-sh-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(249, 115, 22, 0.15);
+    font-size: 13px;
+}
+
+.ds-sh-title {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+}
+
+.ds-sh-num {
+    color: #F97316;
+    margin-right: 6px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.ds-sh-sub {
+    font-size: 11px;
+    color: #64748B;
+    margin-top: 1px;
+}
+
+/* Big Number */
+.ds-big-number-wrap {
+    text-align: center;
+    padding: 20px 0 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 16px;
+}
+
+.ds-big-label {
+    font-size: 11px;
+    color: #64748B;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.ds-big-number {
+    font-size: 34px;
+    font-weight: 900;
+    color: #F97316;
+    letter-spacing: -1.5px;
+}
+
+.ds-big-unit {
+    font-size: 14px;
+    font-weight: 600;
+    margin-left: 2px;
+}
+
+.ds-diff-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.ds-diff-badge.up {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22C55E;
+}
+
+.ds-diff-badge.down {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+}
+
+/* Card & Grid */
+.ds-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ds-card-label {
+    font-size: 10px;
+    color: #64748B;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.ds-card-value {
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.ds-card-value.warn {
+    color: #EF4444;
+}
+
+.ds-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+/* Method (donut) */
+.ds-method-wrap {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.ds-method-list {
+    flex: 1;
+    min-width: 180px;
+}
+
+.ds-method-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ds-method-item.no-border {
+    border-bottom: none;
+}
+
+.ds-method-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ds-method-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+}
+
+.ds-method-name {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.ds-method-right {
+    text-align: right;
+}
+
+.ds-method-amount {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.ds-method-sub {
+    font-size: 10px;
+    color: #64748B;
+}
+
+/* Subsection */
+.ds-subsection {
+    margin-bottom: 20px;
+}
+
+.ds-subsection:last-child {
+    margin-bottom: 0;
+}
+
+.ds-sub-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #94A3B8;
+    margin-bottom: 12px;
+}
+
+/* Bar Chart */
+.ds-bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    width: 100%;
+}
+
+.ds-bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.ds-bar-val {
+    font-size: 9px;
+    color: #94A3B8;
+    white-space: nowrap;
+}
+
+.ds-bar {
+    width: 100%;
+    max-width: 32px;
+    background: rgba(249, 115, 22, 0.4);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s cubic-bezier(.4, 0, .2, 1);
+}
+
+.ds-bar.highlight {
+    background: #F97316;
+}
+
+.ds-bar-label {
+    font-size: 10px;
+    color: #64748B;
+    font-weight: 400;
+}
+
+.ds-bar-label.highlight {
+    font-weight: 700;
+}
+
+/* Table Grid */
+.ds-table-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+}
+
+.ds-table-card {
+    transition: border-color 0.2s;
+}
+
+.ds-table-top {
+    border-color: rgba(249, 115, 22, 0.2) !important;
+    background: rgba(249, 115, 22, 0.06) !important;
+}
+
+.ds-table-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.ds-table-name {
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.ds-top-badge {
+    font-size: 8px;
+    color: #F97316;
+    font-weight: 700;
+    background: rgba(249, 115, 22, 0.15);
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+
+.ds-table-revenue {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.ds-table-sub {
+    font-size: 10px;
+    color: #64748B;
+}
+
+.ds-table-summary {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.ds-summary-col {
+    flex: 1;
+}
+
+.ds-summary-label {
+    font-size: 10px;
+    color: #64748B;
+    font-weight: 600;
+}
+
+.ds-summary-value {
+    font-size: 16px;
+    font-weight: 800;
+    margin-top: 2px;
+}
+
+.ds-summary-divider {
+    width: 1px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Menu Grid */
+.ds-menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.ds-rank-item {
+    margin-bottom: 10px;
+}
+
+.ds-rank-head {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+.ds-rank-label {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ds-rank-num {
+    font-size: 9px;
+    font-weight: 800;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #94A3B8;
+}
+
+.ds-rank-num.first {
+    background: #F97316;
+    color: #fff;
+}
+
+.ds-rank-val {
+    font-weight: 700;
+    font-size: 11px;
+}
+
+.ds-rank-val-sm {
+    font-size: 10px;
+}
+
+.ds-rank-bar-track {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.ds-rank-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: #475569;
+    transition: width 0.4s ease;
+}
+
+.ds-rank-bar-fill.first {
+    background: #F97316;
+}
+
+/* Settlement */
+.ds-settle-total-wrap {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.ds-settle-total-label {
+    font-size: 10px;
+    color: #64748B;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.ds-settle-total-value {
+    font-size: 30px;
+    font-weight: 900;
+    color: #F97316;
+    letter-spacing: -1px;
+}
+
+.ds-settle-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.ds-settle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 14px;
+    border-radius: 6px;
+}
+
+.ds-settle-row.bold {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.ds-settle-row.border-top {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ds-settle-row-label {
+    font-size: 12px;
+    color: #94A3B8;
+    font-weight: 500;
+}
+
+.ds-settle-row-label.bold {
+    color: #F8FAFC;
+    font-weight: 700;
+}
+
+.ds-confirm-btn {
+    width: 100%;
+    margin-top: 16px;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #F97316, #EA580C);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(249, 115, 22, 0.25);
+}
+
+.ds-confirm-btn:active {
+    transform: scale(0.98);
+}
+
+/* Filters */
+.ds-filter-wrap {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.ds-filter-btn {
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.04);
+    color: #64748B;
+    transition: all 0.15s;
+}
+
+.ds-filter-btn.active {
+    background: rgba(249, 115, 22, 0.15);
+    color: #F97316;
+}
+
+.ds-filter-status.active {
+    background: rgba(99, 102, 241, 0.15);
+    color: #818CF8;
+}
+
+.ds-filter-divider {
+    width: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 0 2px;
+}
+
+.ds-order-count {
+    font-size: 11px;
+    color: #475569;
+    margin-bottom: 10px;
+}
+
+/* Order list */
+.ds-order-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ds-order-item {
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.ds-order-item.expanded {
+    border-color: rgba(249, 115, 22, 0.2);
+}
+
+.ds-order-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ds-order-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ds-order-table {
+    font-size: 13px;
+    font-weight: 800;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 8px;
+    border-radius: 6px;
+    min-width: 30px;
+    text-align: center;
+}
+
+.ds-order-amount {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.ds-order-meta {
+    font-size: 10px;
+    color: #64748B;
+}
+
+.ds-order-badges {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.ds-badge {
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.ds-badge.method-card {
+    background: rgba(129, 140, 248, 0.1);
+    color: #818CF8;
+}
+
+.ds-badge.method-cash {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22C55E;
+}
+
+.ds-badge.method-transfer {
+    background: rgba(251, 191, 36, 0.1);
+    color: #FBBF24;
+}
+
+.ds-badge.status-ok {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22C55E;
+}
+
+.ds-badge.status-cancel {
+    background: rgba(239, 68, 68, 0.12);
+    color: #EF4444;
+}
+
+.ds-order-detail {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ds-order-menu-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 12px;
+}
+
+.ds-menu-name {
+    color: #CBD5E1;
+}
+
+.ds-menu-price {
+    font-weight: 600;
+}
+
+.ds-show-all-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    background: transparent;
+    color: #64748B;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ── Transitions ── */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+    transition: opacity 0.25s ease;
+}
+
+.modal-fade-enter-active .ds-modal {
+    transition: transform 0.25s cubic-bezier(.4, 0, .2, 1);
+}
+
+.modal-fade-leave-active .ds-modal {
+    transition: transform 0.2s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+    opacity: 0;
+}
+
+.modal-fade-enter-from .ds-modal {
+    transform: translateY(30px);
+}
+
+.modal-fade-leave-to .ds-modal {
+    transform: translateY(15px);
+}
+
+.slide-down-enter-active {
+    transition: all 0.2s ease;
+}
+
+.slide-down-leave-active {
+    transition: all 0.15s ease;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+}
+
+.slide-down-enter-to {
+    max-height: 300px;
+}
+
+/* ── 모바일 반응형 ── */
+@media (max-width: 480px) {
+    .ds-overlay {
+        padding: 0;
+    }
+
+    .ds-modal {
+        border-radius: 0;
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    .ds-menu-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}

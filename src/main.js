@@ -16,26 +16,34 @@ const options = {
   closeOnClick: true,
 };
 
+const SNAPSHOT_KEY = "pre_unload_snapshot";
 const SESSION_KEY = "is_session_active";
 
-// 1. 현재 탭/창의 세션 상태 확인
-const isSessionActive = sessionStorage.getItem(SESSION_KEY);
+const snapshot = sessionStorage.getItem(SNAPSHOT_KEY);
 
-if (!isSessionActive) {
-    // 세션 정보가 아예 없다면 (즉, 브라우저를 새로 켰거나 탭을 새로 연 경우)
-    localStorage.clear();
-    // 이제 세션이 시작되었음을 기록 (이 값은 새로고침해도 유지됨)
-    sessionStorage.setItem(SESSION_KEY, "true");
+if (snapshot) {
+  // 새로고침: sessionStorage 스냅샷이 살아있음
+  sessionStorage.removeItem(SNAPSHOT_KEY);
+  sessionStorage.setItem(SESSION_KEY, "true");
+  console.log("새로고침 감지 - localStorage 유지");
 } else {
-    // 세션 정보가 있다면 (새로고침한 경우 등)
-    // 아무것도 하지 않음 (localStorage 유지)
-    console.log("세션 유지 중 - 새로고침 감지");
+  // 브라우저 종료 후 재시작: 고객 토큰 정리
+  // selectedTable은 더 이상 사용하지 않으므로 토큰만 확인
+  if (!localStorage.getItem("ownerName")) {
+    // ownerName 없으면 고객 토큰 → 제거
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("currentGroupId");
+  }
+  sessionStorage.setItem(SESSION_KEY, "true");
 }
+
+// beforeunload 시 스냅샷 저장 (새로고침/종료 판별용)
+window.addEventListener("beforeunload", () => {
+  sessionStorage.setItem(SNAPSHOT_KEY, "1");
+});
 
 /**
  * 1. Request Interceptor: 모든 요청에 토큰 자동 부착
- * 점주님의 서비스는 accessToken 하나에 로그인/매장/테이블 정보가 갱신되어 담기므로
- * 스토리지의 accessToken만 참조하면 됩니다.
  */
 axios.interceptors.request.use(
   (config) => {
@@ -55,7 +63,6 @@ axios.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    // 401 에러이고, 재시도하지 않은 요청일 때 (무한 루프 방지)
     if (
       error.response &&
       error.response.status === 401 &&
@@ -71,31 +78,29 @@ axios.interceptors.response.use(
         return Promise.reject(error);
       }
 
-     try {
-  const refreshToken = localStorage.getItem("refreshToken");
-  // axios.post 대신 refreshAxios.post 사용
-  const response = await refreshAxios.post(
-    `${process.env.VUE_APP_API_BASE_URL}/owner/refresh`,
-    {},
-    { headers: { Authorization: `Bearer ${refreshToken}` } }
-  );
+      try {
+        const refreshToken = localStorage.getItem("refreshToken");
+        const response = await refreshAxios.post(
+          `${process.env.VUE_APP_API_BASE_URL}/owner/refresh`,
+          {},
+          { headers: { Authorization: `Bearer ${refreshToken}` } }
+        );
 
         const newAccessToken = response.data.accessToken;
         const newRefreshToken = response.data.refreshToken;
 
-        // 새로운 토큰들 저장
         localStorage.setItem("accessToken", newAccessToken);
         if (newRefreshToken) {
           localStorage.setItem("refreshToken", newRefreshToken);
         }
 
-        // 기존에 실패했던 요청의 헤더를 새 토큰으로 교체 후 재요청
         originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
         return axios(originalRequest);
       } catch (refreshError) {
         console.error("토큰 갱신 실패:", refreshError);
-        localStorage.clear();
-        // 점주 관리 시스템 로그인 페이지로 이동
+        // 점주 토큰만 삭제 (고객 데이터 보존)
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
         router.push("/");
         return Promise.reject(refreshError);
       }
@@ -103,8 +108,6 @@ axios.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-
-
 
 const pinia = createPinia();
 app.use(pinia);

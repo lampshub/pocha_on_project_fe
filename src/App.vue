@@ -2,13 +2,7 @@
   <router-view />
 </template>
 
-<script>
 
-export default {
-  name: 'App',
-  // components: {}
-}
-</script>
 <style>
 /* 7개 파일에서 공통으로 사용하던 CSS 변수를 여기에 선언합니다 */
 :root {
@@ -47,3 +41,49 @@ img {
 }
 
 </style>
+
+<script setup>
+import { onMounted, onUnmounted, watch } from "vue";
+import { useOrderSocketStore } from "@/store/orderSocket";
+import { useToast } from "vue-toastification";
+
+const orderSocket = useOrderSocketStore();
+const toast = useToast();
+
+onMounted(() => {
+  const token = localStorage.getItem("accessToken");
+  const storeId = localStorage.getItem("ownerStoreId");
+  if (token && storeId) {
+    orderSocket.connect(storeId, token);
+  }
+});
+
+onUnmounted(() => {
+  orderSocket.disconnect();
+});
+
+// 신규 주문 알림
+watch(
+  () => orderSocket.lastOrderMessage,
+  (msg) => {
+    if (!msg?.data) return;
+    const latest = msg.data;
+
+    if (latest?.type === 'PRESENT') {
+      toast.info(
+        `🎁 선물 주문! ${latest.senderTableNum}번 → ${latest.receiverTableNum}번`,
+        { position: "top-right", timeout: 4000 }
+      );
+    } else {
+      const menuNames = latest?.webMenuList
+        ?.map(m => m.menuName)
+        .join(', ') || '새 주문';
+
+      toast.success(
+        `📋 ${latest?.tableNum || ''}번 테이블: ${menuNames}`,
+        { position: "top-right", timeout: 4000 }
+      );
+    }
+  }
+);
+</script>

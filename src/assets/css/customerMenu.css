@@ -256,6 +256,7 @@
   align-items: center;
   justify-content: center;
   font-size: 18px;
+  margin-left: 15px;
 }
 
 .close-btn:hover {
@@ -998,9 +999,259 @@
   font-weight: 700;
   cursor: pointer;
   transition: border-color 0.2s ease, color 0.2s ease;
+
+  display: flex;             
+  align-items: center;        /* 세로 가운데 */
+  justify-content: center;    /* 가로 가운데 */
+
 }
 
 .table-select-modal .modal-footer .action-btn-secondary:hover {
   border-color: rgba(255,255,255,0.75);
   color: #ffffff;
 }
+
+/* ════════════════════════════════════════════════════
+   기존 대화방 목록 (채팅 모달 하단)
+   ════════════════════════════════════════════════════ */
+
+.existing-rooms-section {
+  padding: 4px 20px 16px;
+  border-top: none;
+  margin-top: 0;
+}
+
+.existing-rooms-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.3px;
+  padding: 10px 0 8px;
+}
+
+.existing-rooms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 170px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* 스크롤바 */
+.existing-rooms-list::-webkit-scrollbar { width: 4px; }
+.existing-rooms-list::-webkit-scrollbar-track { background: transparent; }
+.existing-rooms-list::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
+
+.existing-room-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.existing-room-item:hover {
+  background: #2f2f32;
+  border-color: rgba(234, 88, 12, 0.5);
+}
+
+.existing-room-item:active {
+  transform: scale(0.98);
+}
+
+.room-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.room-table-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #c2410c);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.room-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.room-table-num {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.room-last-msg {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.room-unread-badge {
+  min-width: 20px;
+  height: 20px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  flex-shrink: 0;
+  animation: badge-pop 0.3s ease;
+}
+
+
+
+
+
+
+
+  /* ════════════════════════════════════════════
+     선물(Present) 팝업 오버레이
+  ════════════════════════════════════════════ */
+
+  .present-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .present-overlay.active {
+    pointer-events: all; opacity: 1;
+  }
+
+  /* 반투명 배경 */
+  .present-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* 팝업 카드 */
+  .present-card {
+    position: relative; z-index: 1;
+    width: 340px; background: #ffffff;
+    border-radius: 28px; padding: 32px 28px 28px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1);
+    transform: scale(0.7) translateY(40px); opacity: 0;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+  }
+  .present-overlay.active .present-card {
+    transform: scale(1) translateY(0); opacity: 1;
+  }
+
+  /* 닫기 버튼 */
+  .present-close {
+    position: absolute; top: 14px; right: 14px;
+    width: 32px; height: 32px; border-radius: 50%;
+    border: none; background: #f0f0f5; color: #888;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s; font-family: 'Noto Sans KR', sans-serif;
+  }
+  .present-close:hover { background: #e0e0ea; color: #444; }
+
+  /* 보낸 테이블 태그 */
+  .present-from-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #fff3f5; border: 1.5px solid #ffc0cb;
+    border-radius: 20px; padding: 5px 14px;
+    font-size: 13px; font-weight: 700; color: #e94560;
+    margin-bottom: 18px;
+  }
+
+  /* 선물 이미지 박스 */
+  .present-image-box {
+    width: 100%; aspect-ratio: 1 / 1;
+    background: linear-gradient(135deg, #fff8f0 0%, #fff0f3 100%);
+    border-radius: 20px; border: 1.5px solid #f0e8e0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px; margin-bottom: 18px;
+    overflow: hidden; position: relative;
+  }
+  .present-image-box img,
+  .present-image-emoji {
+    width: 120px; height: 120px;
+    object-fit: cover; border-radius: 14px;
+    font-size: 80px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .present-item-name {
+    font-size: 18px; font-weight: 700; color: #1a1a2e;
+  }
+
+  .present-footer-text {
+    text-align: center; font-size: 12px; color: #aaa;
+  }
+
+  /* 폭죽 캔버스 */
+  .present-confetti-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; z-index: 2;
+  }
+
+  /* 헤더 선물 아이콘 (미확인 시) */
+  .present-header-icon {
+    position: relative; width: 38px; height: 38px;
+    margin-left: auto;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b35, #e94560);
+    display: flex; align-items: center; justify-content: center;  
+    cursor: pointer; box-shadow: 0 3px 12px rgba(233,69,96,0.5);
+    animation: presentIconPulse 1.8s ease-in-out infinite;
+    font-size: 18px;
+  }
+
+  .present-header-badge {
+    position: absolute; top: -3px; right: -3px;
+    min-width: 17px; height: 17px;
+    background: #7c3aed; border-radius: 9px;
+    font-size: 9px; font-weight: 800; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 3px; border: 2px solid #fff;
+  }
+
+  @keyframes presentIconPulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.1) rotate(-5deg); }
+  }
+
+  @keyframes presentBurstRing {
+    0%   { transform: translate(-50%, -50%) scale(0); opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
+  }
+
+  .present-burst-ring {
+    position: absolute; width: 80px; height: 80px;
+    border-radius: 50%; border: 3px solid;
+    pointer-events: none; top: 50%; left: 50%;
+    animation: presentBurstRing 0.6s ease-out forwards;
+  }

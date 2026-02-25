@@ -138,23 +138,25 @@
 </template>
 
 <script setup>
-import {ref, computed, onMounted, onUnmounted} from "vue";
+import {ref, computed, onMounted, onUnmounted, watch} from "vue";
 import {Client} from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import {useToast} from 'vue-toastification'
 import {useStoreInfo} from "@/store/storeInfo";
 import axios from "axios";
 import {useRouter} from "vue-router";
 import {EventSourcePolyfill} from "event-source-polyfill";
+import {useOrderSocketStore} from "@/store/orderSocket";
 
-const router = useRouter();
+import {useToast} from 'vue-toastification'
 const toast = useToast();
+const router = useRouter();
 const realtimeOrders = ref([]);
 const storeInfo = useStoreInfo();
 const tables = ref([]);
 const showTableDetail = ref(false);
 const selectedTable = ref(null);
 const showTableView = ref(false);
+const orderSocket = useOrderSocketStore();
 const CALL_STORAGE_KEY = 'staffCallTables'  //호출 상태저장(화면이동후에도 남아있게)
 
 // 호출 중인 테이블 목록 (실시간 주문 위 호출 바에 표시)
@@ -219,21 +221,21 @@ const connectWebSocket = () => {
     onConnect: () => {
       console.log("웹소켓 연결됨");
 
-      // pub/sub 구독 (OrderCreateDto) - webPublisher 전용
-      stompClient.subscribe(`/topic/order/${storeId.value}`, (message) => {
-        const orderDto = JSON.parse(message.body);
-        handleNewOrder(orderDto);
-      });
+//       // pub/sub 구독 (OrderCreateDto) - webPublisher 전용
+//       stompClient.subscribe(`/topic/order/${storeId.value}`, (message) => {
+//         const orderDto = JSON.parse(message.body);
+//         handleNewOrder(orderDto);
+//       });
 
-      // 점주 전용 큐 구독 — ORDER_DONE 처리 전용
-      // (새 주문 추가는 /topic/order/ 구독의 handleNewOrder에서 처리)
-      stompClient.subscribe(`/topic/order-queue/${storeId.value}`, (message) => {
-        const data = JSON.parse(message.body);
+//       // 점주 전용 큐 구독 — ORDER_DONE 처리 전용
+//       // (새 주문 추가는 /topic/order/ 구독의 handleNewOrder에서 처리)
+//       stompClient.subscribe(`/topic/order-queue/${storeId.value}`, (message) => {
+//         const data = JSON.parse(message.body);
 
-  if (data.type === 'ORDER_DONE') {
-    realtimeOrders.value = realtimeOrders.value.filter(o => o.orderingId !== data.orderingId);
-  }
-});
+//   if (data.type === 'ORDER_DONE') {
+//     realtimeOrders.value = realtimeOrders.value.filter(o => o.orderingId !== data.orderingId);
+//   }
+// });
 
     },
     onStompError: (frame) => console.error("STOMP 에러:", frame),
@@ -268,6 +270,29 @@ const connectSSE = () => {
   })
   eventSource.onerror = (e) => { console.error('SSE 에러:', e) }
 }
+
+// ① 신규 주문 + 선물
+watch(
+  () => orderSocket.lastOrderMessage,
+  (msg) => {
+    if (msg?.data) handleNewOrder(msg.data);
+  }
+);
+
+// ② ORDER_DONE
+watch(
+  () => orderSocket.lastQueueMessage,
+  (msg) => {
+    if (msg?.data?.type === 'ORDER_DONE') {
+      realtimeOrders.value = realtimeOrders.value.filter(
+        (o) => o.orderingId !== msg.data.orderingId
+      );
+    }
+  }
+);
+
+
+
 
 // 새 주문 처리 (OrderCreateDto — /topic/order/ 구독)
 const handleNewOrder = (orderDto) => {
@@ -382,12 +407,55 @@ onMounted(async () => {
   } catch (e) {
     toast.error(e.response?.data?.errorMessage || "테이블 불러오기 실패")
   }
+  
   // 웹소켓 연결
   connectWebSocket();
 
   // SSE연결(직원호출 수신용)
   connectSSE();
+
+ // 🟢🟢🟢 추가 시작 — 여기부터 onMounted 닫는 }); 전까지 🟢🟢🟢
+
+  // Pinia 주문 웹소켓 연결 확인
+  if (!orderSocket.isConnected && storeId.value && token) {
+    orderSocket.connect(storeId.value, token);
+  }
+
+  // standby 주문 복원 (페이지 진입마다)
+  try {
+    const res = await axios.get(
+      `${process.env.VUE_APP_API_BASE_URL}/ordering/queue`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    res.data.forEach((order) => {
+      order.orderingDetailInfos.forEach((detail) => {
+        const exists = realtimeOrders.value.some(
+          (o) => o.orderingId === order.orderingId && o.menu === detail.menuName
+        );
+        if (!exists) {
+          realtimeOrders.value.push({
+            id: `${order.orderingId}-${detail.menuName}-${Date.now()}`,
+            orderingId: order.orderingId,
+            tableNum: order.tableId,
+            time: new Date(order.createAt).toLocaleTimeString("ko-KR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            menu: detail.menuName,
+            option: detail.option?.join(", ") || null,
+            quantity: detail.quantity,
+            price: 0,
+            status: "주문접수",
+          });
+        }
+      });
+    });
+  } catch (e) {
+    console.log("standby 주문 조회 실패:", e);
+  }
 });
+
+
 
 onUnmounted(() => {
   stompClient?.deactivate();
@@ -418,7 +486,7 @@ const completeOrder = async (order) => {
   console.log('삭제할 order.id:', order.id)
   try {
     await axios.post(
-      `${process.env.VUE_APP_API_BASE_URL}/ordering/${order.orderingId}/done`,
+      `${process.env.VUE_APP_API_BASE_URL}/ordering/done/${order.orderingId}`,
         {},
         {
           headers: { Authorization: `Bearer ${accessToken.value}` } }  //
