@@ -162,7 +162,7 @@ const closeHour  = ref(10)
 const closeMinute = ref(0)
 
 const hours   = Array.from({ length: 12 }, (_, i) => i + 1)   // 1~12
-const minutes = [0, 10, 20, 30, 40, 50]
+const minutes = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
 
 // 24시간 포맷으로 변환 (HH:mm)
 const toTime24 = (ampm, hour, minute) => {

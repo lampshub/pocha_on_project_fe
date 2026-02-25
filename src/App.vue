@@ -40,4 +40,10 @@ body {
   color: var(--text);
   line-height: 1.5;
 }
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
 </style>

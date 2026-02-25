@@ -2,7 +2,7 @@
   <div class="pos-payment-page">
     <div class="payment-header">
       <button class="back-btn" @click="goBack">← 뒤로</button>
-      <h2 class="payment-title">{{ tableNumber }}번 테이블 결제 (POS)</h2>
+      <h2 class="payment-title">{{ tableNum }}번 테이블 결제 (POS)</h2>
     </div>
 
     <PaymentWidget
@@ -20,35 +20,33 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import {useToast} from 'vue-toastification'
 
 const router = useRouter()
 const route = useRoute()
-const toast = useToast();
 
-const tableNumber = ref(0)
+const tableNum = ref(0)
 const totalAmount = ref(0)
 const tableId = ref(null)
 
 onMounted(() => {
   // OwnerPanel에서 쿼리로 넘겨받은 정보
-  tableNumber.value = Number(route.query.tableNumber) || 0
+  tableNum.value = Number(route.query.tableNum) || 0
   totalAmount.value = Number(route.query.amount) || 0
   tableId.value = route.query.tableId || null
 
   if (totalAmount.value <= 0) {
-    toast.error('결제 금액이 올바르지 않습니다.')
+    alert('결제 금액이 올바르지 않습니다.')
     router.back()
   }
 })
 
 const orderName = computed(() =>
-    `포차온 ${tableNumber.value}번 테이블 주문 (POS)`
+    `포차온 ${tableNum.value}번 테이블 주문 (POS)`
 )
 
 const paymentMetadata = computed(() => ({
   tableId: tableId.value,
-  tableNumber: tableNumber.value,
+  tableNum: tableNum.value,
   payerType: 'POS', // 직원이 POS에서 결제
 }))
 

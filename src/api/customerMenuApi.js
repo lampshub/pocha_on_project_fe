@@ -7,7 +7,10 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+    if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+    console.log(JSON.parse(atob(token.split('.')[1])))  
+  }
   return config
 })
 
@@ -22,4 +25,5 @@ export const customerMenuApi = {
   createOrder:    (payload)      => api.post('/orders/create', payload),
   addOrder:       (gid, payload) => api.post(`/orders/add?groupId=${gid}`, payload),
   getOrderList:   (gid)          => api.get(`/orders/list?groupId=${gid}`),
+  sendPresent: (payload) => api.post('/present/send', payload),
 }

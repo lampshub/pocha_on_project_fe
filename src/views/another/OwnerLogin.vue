@@ -252,9 +252,6 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import {useToast} from 'vue-toastification'
-
-const toast = useToast();
 
 // 페이지 진입시 포커스 제거(커서 깜박임 없앰)
 onMounted(() => {
@@ -348,7 +345,7 @@ const handleSendEmailCode = async () => {
     });
 
     findEmail.codeSent = true;
-    toast.info('인증 코드가 발송되었습니다.');
+    alert('인증 코드가 발송되었습니다.');
   } catch (error) {
     findEmailError.value = error.response?.data?.message || '인증번호 발송에 실패했습니다. 정보를 확인해주세요.';
   }
@@ -417,7 +414,7 @@ const handleSendCode = async () => {
     });
 
     findPassword.codeSent = true
-    toast.info('인증 코드가 이메일로 발송되었습니다.')
+    alert('인증 코드가 이메일로 발송되었습니다.')
   } catch (error) {
     findPasswordError.value = error.response?.data?.message || '인증코드 발송에 실패했습니다.'
   }
@@ -490,5 +487,4 @@ const closeFindPasswordModal = () => {
 
 <style scoped>
 @import "@/assets/css/OwnerLogin.css";
-
 </style>

@@ -6,24 +6,23 @@ export const useStoreInfo = defineStore('storeInfo', () => {
     const storeName = ref('');
 
     function setStore(id, name) {
-        storeId.value = ref(id);
+        storeId.value = id;
         storeName.value = name;
 
-        localStorage.setItem('storeId', id);
-        localStorage.setItem('storeName', name);
+        localStorage.setItem('currentStoreId', id);
+        localStorage.setItem('currentStoreName', name);
     }
 
     function loadFromStorage() {
-        storeId.value = localStorage.getItem('storeId');
-        storeName.value = localStorage.getItem('storeName');
-
+        storeId.value = localStorage.getItem('currentStoreId');
+        storeName.value = localStorage.getItem('currentStoreName');
     }
 
     function clear() {
         storeId.value = null;
         storeName.value = '';
-        localStorage.removeItem('storeId');
-        localStorage.removeItem('storeName');
+        localStorage.removeItem('currentStoreId');
+        localStorage.removeItem('currentStoreName');
     }
 
     return {storeId, storeName, setStore, loadFromStorage, clear};

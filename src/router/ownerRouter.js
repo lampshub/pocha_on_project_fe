@@ -1,4 +1,3 @@
-
 import OwnerPanel from "@/views/owner/OwnerPanel.vue";
 import OwnerSettlement from "@/views/owner/OwnerSettlement.vue";
 import OwnerSettings from "@/views/owner/OwnerSettings.vue";
@@ -16,8 +15,10 @@ export const ownerRouter = [
         component: OwnerSettlement
     },
     {
-        path: "/owner/setting",
+        path: "/owner/settings",
         name: "OwnerSettings",
         component: OwnerSettings
     },
+
+
 ]

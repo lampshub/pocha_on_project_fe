@@ -7,7 +7,6 @@
         <button class="nav-btn-header" :class="{ active: showTableView }" @click="showTableView = !showTableView">
           {{ showTableView ? '📋 실시간 주문' : '🪑 테이블 현황' }}
         </button>
-        <router-link to="/owner/kitchen" class="nav-btn-header">🍳 주방</router-link>
         <router-link to="/owner/settlement" class="nav-btn-header">📊 매출 정산</router-link>
         <router-link to="/owner/settings" class="nav-btn-header">⚙️ 설정 관리</router-link>
         <button class="back-btn" @click="goBackToDashboard">🏠 대시보드</button>
@@ -231,11 +230,11 @@ const connectWebSocket = () => {
       stompClient.subscribe(`/topic/order-queue/${storeId.value}`, (message) => {
         const data = JSON.parse(message.body);
 
-        // 완료 처리 - 해당 주문 카드 제거
-        if (data.type === 'ORDER_DONE') {
-          realtimeOrders.value = realtimeOrders.value.filter(o => o.id !== data.orderingId);
-        }
-      });
+  if (data.type === 'ORDER_DONE') {
+    realtimeOrders.value = realtimeOrders.value.filter(o => o.orderingId !== data.orderingId);
+  }
+});
+
     },
     onStompError: (frame) => console.error("STOMP 에러:", frame),
   });
@@ -275,41 +274,46 @@ const handleNewOrder = (orderDto) => {
   const now = new Date();
   const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  // 선물 주문
-  if (orderDto.receiverTableNum != null) {
+ if (orderDto.type === 'PRESENT') {
     orderDto.menuDtoList?.forEach((menu) => {
+      // 실시간 주문 카드
       realtimeOrders.value.push({
-        id: Date.now() + Math.random(),
-        tableNumber: orderDto.senderTableNum,
+        id: `${orderDto.groupId}-${menu.menuName}-${Date.now()}`,
+        tableNum: orderDto.senderTableNum,
         time,
         menu: `🎁 ${menu.menuName} → ${orderDto.receiverTableNum}번`,
         option: '선물',
         quantity: menu.menuQuantity,
         price: 0,
         status: '선물',
-      })
-      let table = tables.value.find((t) => t.number === orderDto.senderTableNum)
+        orderingId: orderDto.orderingId,
+      });
+
+      let table = tables.value.find(t => t.number === orderDto.senderTableNum);
       if (table) {
         table.detailOrders.push({
-          id: Date.now(),
+          id: `${orderDto.groupId}-${menu.menuName}`,
           menu: `🎁 ${menu.menuName} → ${orderDto.receiverTableNum}번`,
           option: '선물',
           quantity: menu.menuQuantity,
           price: 0,
-        })
+        });
       }
-    })
-    return
+    });
+    return;
   }
 
-  // ★ 실시간 주문 카드 (메뉴별 개별 카드)
+  // ★ 실시간 주문 카드 (메뉴별 개별 카드) — 기존 unshift 블록 삭제하고 이걸로 교체
   orderDto.webMenuList?.forEach((menu) => {
     const optionStr = menu.optionList
-      ?.map(opt => `${opt.optionGroupName}: ${opt.optionDetailList?.map(d => d.optionDetailName).join(', ')}`)
-      .join(' / ') || null
+        ?.map(opt => `${opt.optionGroupName}: ${opt.optionDetailList?.map(d => d.optionDetailName).join(', ')}`)
+        .join(' / ') || null
+
     realtimeOrders.value.push({
-      id: Date.now() + Math.random(),
-      tableNumber: orderDto.tableNumber,
+      // id: `${orderDto.orderingId}-${Date.now()}-${Math.random()}`,
+      // orderingId: orderDto.orderingId,
+      id: `${orderDto.orderingId}-${menu.menuName}-${Date.now()}-${Math.random()}`,
+      tableNum: orderDto.tableNum,
       time,
       menu: menu.menuName,
       option: optionStr,
@@ -323,7 +327,7 @@ const handleNewOrder = (orderDto) => {
   // ★ 테이블 카드 업데이트
   let table = tables.value.find((t) => t.number === orderDto.tableNumber);
   if (!table) {
-    table = {number: orderDto.tableNumber, total: 0, hasCall: false, orders: [], detailOrders: []};
+    table = {number: orderDto.tableNum, total: 0, hasCall: false, orders: [], detailOrders: []};
     tables.value.push(table);
     tables.value.sort((a, b) => a.number - b.number);
   }
@@ -337,7 +341,7 @@ const handleNewOrder = (orderDto) => {
       ?.flatMap((opt) => opt.optionDetailList ?? [])
       .reduce((sum, d) => sum + (d.optionDetailPrice ?? 0), 0) ?? 0;
     table.detailOrders.push({
-      id: Date.now() + Math.random(),
+      id: `${orderDto.orderingId}-${menu.menuName}-${Date.now()}`,
       menu: menu.menuName,
       option: optionStr,
       quantity: menu.quantity,
@@ -403,7 +407,7 @@ const processPayment = () => {
   router.push({
     name: 'POSPayment',
     query: {
-      tableNumber: selectedTable.value.number,
+      tableNum: selectedTable.value.number,
       tableId: selectedTable.value.tableId,
       amount: selectedTable.value.total,
     }
@@ -411,10 +415,17 @@ const processPayment = () => {
 };
 
 const completeOrder = async (order) => {
+  console.log('삭제할 order.id:', order.id)
   try {
-    await axios.post(`${process.env.VUE_APP_API_BASE_URL}/ordering/done/${order.orderingId}`)
+    await axios.post(
+      `${process.env.VUE_APP_API_BASE_URL}/ordering/${order.orderingId}/done`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${accessToken.value}` } }  //
+    )
     // 같은 orderingId의 모든 카드 제거
-    realtimeOrders.value = realtimeOrders.value.filter(o => o.orderingId !== order.orderingId);
+    // realtimeOrders.value = realtimeOrders.value.filter(o => o.orderingId !== order.orderingId);
+    console.log('삭제 후 realtimeOrders:', realtimeOrders.value.map(o => o.id))
   } catch (e) {
     toast.error(e.response?.data?.errorMessage || "주문완료 처리 실패");
   }

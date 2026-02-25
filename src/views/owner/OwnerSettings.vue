@@ -475,7 +475,7 @@ const newCategoryName = ref('')
 
 // ── 영업시간 커스텀 피커 ──
 const timeHours   = Array.from({ length: 12 }, (_, i) => i + 1)
-const timeMinutes = [0, 10, 20, 30, 40, 50]
+const timeMinutes = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
 
 const hoursOpenAmPm   = ref('AM')
 const hoursOpenHour   = ref(9)
