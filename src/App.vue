@@ -1,10 +1,13 @@
 <template>
-  <router-view />
+  <router-view v-slot="{ Component }">
+    <keep-alive :include="['OwnerPanel']">
+      <component :is="Component" />
+    </keep-alive>
+  </router-view>
 </template>
 
-
 <style>
-/* 7개 파일에서 공통으로 사용하던 CSS 변수를 여기에 선언합니다 */
+/* CSS 변수 선언 생략 (기존과 동일) */
 :root {
   --primary: #ea580c;
   --primary-dark: #c2410c;
@@ -39,7 +42,6 @@ img {
   display: block;
   max-width: 100%;
 }
-
 </style>
 
 <script setup>
@@ -53,7 +55,15 @@ const toast = useToast();
 onMounted(() => {
   const token = localStorage.getItem("accessToken");
   const storeId = localStorage.getItem("ownerStoreId");
-  if (token && storeId) {
+  
+  // ★ 손님 토큰이면 연결 안 함
+if (token && storeId) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64));
+      if (payload.tableNum) return;
+    } catch (e) { void e; } 
     orderSocket.connect(storeId, token);
   }
 });
@@ -62,19 +72,30 @@ onUnmounted(() => {
   orderSocket.disconnect();
 });
 
-// 신규 주문 알림
+// 신규 주문 알림 감시
 watch(
   () => orderSocket.lastOrderMessage,
   (msg) => {
     if (!msg?.data) return;
-    const latest = msg.data;
+  const token = localStorage.getItem("accessToken");
+    if (token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(atob(base64));
+        if (payload.tableNum) return;
+      } catch (e) { void e; }
+    }
 
+    const latest = msg.data;
     if (latest?.type === 'PRESENT') {
       toast.info(
         `🎁 선물 주문! ${latest.senderTableNum}번 → ${latest.receiverTableNum}번`,
         { position: "top-right", timeout: 4000 }
       );
-    } else {
+    } 
+    // 2. 일반 주문 알림
+    else {
       const menuNames = latest?.webMenuList
         ?.map(m => m.menuName)
         .join(', ') || '새 주문';
@@ -84,6 +105,7 @@ watch(
         { position: "top-right", timeout: 4000 }
       );
     }
-  }
+  },
+  { deep: true } // 객체 내부 프로퍼티 변화 감지를 위해 권장
 );
 </script>

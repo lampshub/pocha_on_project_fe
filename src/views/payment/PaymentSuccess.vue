@@ -77,12 +77,16 @@ onMounted(async () => {
 const goHome = () => {
   const from = route.query.from;
   const selectedTable = JSON.parse(localStorage.getItem('selectedTable') || '{}');
+
+  // 결제 완료 → 주문 그룹 초기화 (새 세션 시작)
+  if (paymentData.value) {
+    localStorage.removeItem('currentGroupId')
+  }
+
   if (from === 'pos') {
     router.push('/owner/panel')
   } else {
-    // 고객 메뉴 화면으로 복귀
     router.replace(`/customer/menu/${selectedTable.tableNum}`);
-    // 또는 router.push(`/customer/${storeId}/${tableId}`) 등
   }
 }
 

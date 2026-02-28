@@ -1,0 +1,203 @@
+/* ── 변수 (OwnerPanel과 동일) ───────────────────────── */
+.kitchen-dashboard {
+  --primary: #ea580c;
+  --primary-dark: #c2410c;
+  --primary-light: #fb923c;
+  --bg-dark: #0a0a0a;
+  --bg-secondary: #18181b;
+  --card: #27272a;
+  --card-hover: #3f3f46;
+  --text: #fafafa;
+  --text-secondary: #a1a1aa;
+  --border: #3f3f46;
+  --success: #22c55e;
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg-dark);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* ── 헤더 (OwnerPanel과 동일) ──────────────────────── */
+.kitchen-dashboard .header {
+  padding: 16px 24px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+  flex-shrink: 0;
+}
+.kitchen-dashboard .header-left { display: flex; align-items: center; gap: 12px; }
+.kitchen-dashboard .store-name { font-size: 26px; font-weight: 900;   color: white; }
+.kitchen-label {
+  background: rgba(234, 88, 12, 0.15);
+  color: var(--primary-light);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  border: 1px solid rgba(234, 88, 12, 0.3);
+}
+.kitchen-dashboard .header-right { display: flex; align-items: center; gap: 20px; }
+.order-stats { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); }
+.stat-item strong { color: var(--text); font-size: 16px; margin-left: 4px; }
+.stat-divider { color: var(--border); }
+.kitchen-dashboard .back-btn {
+  padding: 8px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.kitchen-dashboard .back-btn:hover { border-color: var(--primary); background: var(--card-hover); }
+
+/* ── 메인 영역 ─────────────────────────────────────── */
+.kitchen-main { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* ── 주문 그리드 (OwnerPanel과 동일) ───────────────── */
+.orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  align-content: start;
+}
+
+/* ── 주문 카드 (OwnerPanel .order-card와 동일) ──────── */
+.order-card {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  animation: cardIn 0.3s ease;
+}
+@keyframes cardIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.order-card:hover { border-color: var(--primary); box-shadow: 0 4px 20px rgba(234, 88, 12, 0.15); }
+.order-card.all-done { border-color: var(--success); }
+.order-card.all-done:hover { box-shadow: 0 4px 20px rgba(34, 197, 94, 0.15); }
+.order-card.is-gift { border-color: #a855f7; }
+.order-card.is-gift:hover { box-shadow: 0 4px 20px rgba(168, 85, 247, 0.2); }
+
+/* 카드 헤더 (OwnerPanel과 동일) */
+.order-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.order-card-table {
+  background: var(--primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+.order-card-time { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+
+/* ── 메뉴 목록 ─────────────────────────────────────── */
+.order-card-menus { flex: 1; display: flex; flex-direction: column; margin-bottom: 16px; }
+
+.menu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  transition: opacity 0.3s;
+}
+.menu-row:last-child { border-bottom: none; }
+.menu-row.menu-done { opacity: 0.4; }
+.menu-row.menu-served { opacity: 0.3; }
+
+.menu-info { flex: 1; }
+.menu-name { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
+.menu-detail { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.menu-qty { font-size: 13px; font-weight: 700; color: var(--primary-light); }
+.menu-option { font-size: 11px; color: var(--text-secondary); }
+
+.menu-done-btn {
+  padding: 6px 16px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.menu-done-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4); }
+.menu-done-btn:active { transform: translateY(0); }
+
+.menu-done-check {
+  font-size: 18px;
+  font-weight: 900;
+  flex-shrink: 0;
+  width: 40px;
+  text-align: center;
+  color: var(--success);
+}
+
+/* ── 카드 하단 ─────────────────────────────────────── */
+.order-card-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.submitted-label {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--success);
+  padding: 4px 0;
+}
+
+/* 진행률 바 — 컨테이너 꽉 채우기 */
+.progress-bar-wrap {
+  position: relative;
+  background: var(--bg-dark);
+  border-radius: 8px;
+  height: 32px;
+  overflow: hidden;
+}
+.progress-bar {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border-radius: 8px;
+  transition: width 0.4s ease;
+}
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  font-weight: 800;
+  color: white;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+/* ── 빈 상태 ───────────────────────────────────────── */
+.empty-kitchen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0.5;
+  min-height: 60vh;
+}
+.empty-icon { font-size: 64px; }
+.empty-title { font-size: 22px; font-weight: 800; }
+.empty-desc { font-size: 14px; color: var(--text-secondary); }

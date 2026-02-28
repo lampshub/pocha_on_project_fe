@@ -16,7 +16,8 @@
     <div class="main-container">
       <div v-if="tables.length > 0">
         <h2 class="section-title">
-          전체 테이블 ({{ availableCount }}개 이용 가능)
+          전체 테이블
+          <span class="section-count-badge">{{ availableCount }}개 이용 가능</span>
         </h2>
         <div class="table-grid">
           <div

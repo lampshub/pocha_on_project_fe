@@ -791,3 +791,21 @@
         gap: 20px;
     }
 }
+
+.ds-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    color: #64748B;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.ds-empty {
+    text-align: center;
+    padding: 24px 0;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+}

@@ -26,13 +26,13 @@
     justify-content: space-between;
     align-items: center;
     padding: 0 28px;
-    height: 56px;
+    height: 70px;
     background: var(--bg2);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
 .topbar-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 900;
     color: var(--accent);
     margin: 0;
@@ -479,4 +479,133 @@
     .date-picker-bar { justify-content: center; flex-wrap: wrap; }
     .date-select { font-size: 16px; }
     .card-header { flex-direction: column; align-items: flex-start; }
+}
+
+/* 로딩 & 빈 상태 */
+.loading-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 0;
+    color: var(--text2);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.empty-msg {
+    text-align: center;
+    padding: 32px 0;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 700;
+}/* ── 결제 내역 미리보기 ── */
+.tx-preview-card { cursor: pointer; transition: border-color .15s; }
+.tx-preview-card:hover { border-color: var(--accent); }
+.card-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.card-title-row .card-title { margin: 0; }
+.tx-preview-more { font-size: 12px; font-weight: 700; color: var(--accent); }
+.tx-preview-item {
+    display: flex; align-items: center; padding: 10px 0; gap: 8px;
+}
+
+/* ── 슬라이드업 패널 ── */
+.tx-panel-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 1000;
+    display: flex; align-items: flex-end; justify-content: center;
+}
+.tx-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    width: 100%; max-width: 800px;
+    max-height: 85vh;
+    display: flex; flex-direction: column;
+}
+.tx-panel-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.tx-panel-title { font-size: 16px; font-weight: 900; margin: 0; }
+.tx-panel-close {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--card-bg); border: 1px solid var(--border);
+    color: var(--text2); font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: .15s;
+}
+.tx-panel-close:hover { background: var(--danger); color: #fff; }
+.tx-panel-body {
+    flex: 1; overflow-y: auto; padding: 0 20px;
+}
+.tx-panel-body::-webkit-scrollbar { width: 6px; }
+.tx-panel-body::-webkit-scrollbar-track { background: transparent; }
+.tx-panel-body::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 3px;
+    min-height: 60px;
+}
+.tx-panel-body::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
+/* ── 슬라이드업 트랜지션 ── */
+.slide-up-enter-active { transition: all .3s ease-out; }
+.slide-up-leave-active { transition: all .25s ease-in; }
+.slide-up-enter-from .tx-panel { transform: translateY(100%); }
+.slide-up-enter-to .tx-panel { transform: translateY(0); }
+.slide-up-leave-from .tx-panel { transform: translateY(0); }
+.slide-up-leave-to .tx-panel { transform: translateY(100%); }
+.slide-up-enter-from { opacity: 0; }
+.slide-up-leave-to { opacity: 0; }
+
+/* ── 슬라이드업 트랜지션 ── */
+.slide-up-enter-active,
+.slide-up-leave-active {
+    transition: opacity .3s ease;
+}
+.slide-up-enter-active .tx-panel {
+    transition: transform .35s cubic-bezier(.22,.68,0,1.0);
+}
+.slide-up-leave-active .tx-panel {
+    transition: transform .25s cubic-bezier(.55,.06,.68,.19);
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+    opacity: 0;
+}
+.slide-up-enter-from .tx-panel {
+    transform: translateY(100%);
+}
+.slide-up-leave-to .tx-panel {
+    transform: translateY(100%);
+}.show-more-btn {
+     width: 100%;
+     padding: 10px 0;
+     margin-top: 8px;
+     background: transparent;
+     border: 1px dashed var(--border);
+     border-radius: 8px;
+     color: var(--text2);
+     font-size: 12px;
+     font-weight: 700;
+     cursor: pointer;
+     transition: all .15s;
+ }
+.show-more-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.view-mode-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 12px;
+}
+.view-mode-range {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text2);
+    white-space: nowrap;
 }

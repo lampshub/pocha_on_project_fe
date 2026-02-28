@@ -79,20 +79,39 @@
   margin-bottom: 24px;
   letter-spacing: -0.5px;
 }
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 20px;
+  font-weight: 900;
+  color: #fafafa;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
 
-/* ===== 테이블 그리드 - 1줄에 5개 ===== */
+.section-count-badge {
+  background: #ea580c;
+  color: white;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 4px 14px;
+  border-radius: 20px;
+}
+
+/* ===== 테이블 그리드 ===== */
 .table-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
-  gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
   margin-bottom: 40px;
-  justify-content: center !important;
+  align-content: start;
 }
 
 .table-card {
   background: #27272a;
   border: 2px solid #3f3f46;
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 20px 16px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -101,6 +120,8 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  width: 200px;        /* 고정 너비 */
+  flex-shrink: 0;      /* 찌그러짐 방지 */
 }
 
 .table-card:hover {
